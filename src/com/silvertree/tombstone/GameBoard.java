@@ -37,35 +37,37 @@ public class GameBoard {
 
     public void preGameScreen()
     {
-        static BYTE outl1[] ={138, 138, 136, 93, 32, 32,
-                32,129,121,126,132,123,129,121,127,131,32,120,
-                130,129,122,32,32,32,137,138,138,138,0} ;
+//        final byte outl1[] = new byte[]{138, 138, 136, 93, 32, 32,
+//                32,129,121,126,132,123,129,121,127,131,32,120,
+//                130,129,122,32,32,32,137,138,138,138,0} ;
+//
+//        final byte outl2[] = new byte {138,138,138,138,138,139,
+//                140,130,122,124,122,128,130,122,124,125,133,125,
+//                130,130,130,141,142,138,138,138,138,138,0} ;
+//
+//        blankScreen() ;
+//        writeChar(0,2, 136) ;       /* write Mountain char    */
+//        writeChar(0,29,137) ;
+//        writeChar(0,27, GRAVE) ;
+//        Video()->DisplayAt(1,2, (char *)outl1);
+//        Video()->DisplayAt(2,2, (char *)outl2) ;
+//
 
-        static BYTE outl2[] = {138,138,138,138,138,139,
-                140,130,122,124,122,128,130,122,124,125,133,125,
-                130,130,130,141,142,138,138,138,138,138,0} ;
-
-        blankScreen() ;
-        writeChar(0,2, 136) ;       /* write Mountain char    */
-        writeChar(0,29,137) ;
-        writeChar(0,27, GRAVE) ;
-        Video()->DisplayAt(1,2, (char *)outl1);
-        Video()->DisplayAt(2,2, (char *)outl2) ;
     }
 
     void draw(int day)
     {
-        static  char    outl6[] = {152, 134, 152,134, 152, 134, 152, 0	};
-        static  char    outl7[] = {134, 134, 134,134, 134, 134, 134, 0	};
+        final  char    outl6[] =new char [] {152, 134, 152,134, 152, 134, 152, 0	};
+        final  char    outl7[] = new char [] {134, 134, 134,134, 134, 134, 134, 0	};
 
-
+/*
         for (int i=0; i<28; i++)
         {
             writeChar(21, 2+i, BOTTOMEDGE) ;
 
         }
 
-        tiVideo.DisplayAt(22,3, "DAY  POPULATION  SCHOONERS") ;
+        tiVideo.displayAt(22,3, "DAY  POPULATION  SCHOONERS") ;
         int row = 8 ;
         for (i=0; i<3; i++)
         {
@@ -92,6 +94,19 @@ public class GameBoard {
                 n++ ;
             }
         }
+        */
 
     }
+
+    public void displayScore(int score) {
+
+    }
+    void displaySchooners(int numberSchooners){
+
+    }
+
+    void displayDay(int day){
+
+    }
+
 }
