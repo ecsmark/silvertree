@@ -1,12 +1,14 @@
 package com.silvertree.tombstone;
 
 import com.silvertree.tombstone.tiemulation.IVirtualTI;
+import com.silvertree.tombstone.tiemulation.impl.TIKeyboard;
 import com.silvertree.tombstone.tiemulation.impl.VirtualTI;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Group;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
 
 public class Main extends Application {
@@ -14,13 +16,23 @@ public class Main extends Application {
 
     @Override
     public void start(Stage primaryStage) throws Exception{
-        Group root = new Group();
+        Pane root = new Pane();
 
         primaryStage.setTitle("Tombstone City");
         Scene emulatorScene = new Scene(root, 300, 275);
         primaryStage.setScene(emulatorScene);
-        createEmulator(emulatorScene);
-        primaryStage.show();
+        createEmulator(emulatorScene, root);
+        GameBoard gameBoard = new GameBoard(virtualTI.getVideo());
+        gameBoard.blankScreen();
+        gameBoard.preGameScreen();
+        gameBoard.displayLevelMenu();
+        showEmulator(primaryStage) ;
+
+    }
+
+    private void showEmulator(Stage stage) {
+        virtualTI.getVideo().refresh();
+        stage.show() ;
     }
 
 
@@ -28,7 +40,7 @@ public class Main extends Application {
         launch(args);
     }
 
-    void createEmulator(Scene scene){
-        virtualTI = new VirtualTI(scene);
+    void createEmulator(Scene scene, Pane pane){
+        virtualTI = new VirtualTI(scene, pane);
     }
 }
