@@ -1,5 +1,6 @@
 package com.silvertree.tombstone;
 
+import com.silvertree.tombstone.tiemulation.ITIKeyboard;
 import com.silvertree.tombstone.tiemulation.IVirtualTI;
 
 public class TombstoneCity {
@@ -24,35 +25,38 @@ public class TombstoneCity {
     GameBoard gameBoard ;
     IVirtualTI virtualTI ;
     
-    public TombstoneCity(IVirtualTI pTI99)
-    {
-        virtualTI = pTI99 ;
+    public TombstoneCity(IVirtualTI pTI99) {
+        virtualTI = pTI99;
 
-        int day = 0 ;
-        SMonct = 0 ;      // Small Monster count 
-        LMonct = 0 ;      // Large Monster count 
-        Score10 =0 ;  	  // Score (10,000)
-        Score = 0 ;       // Score - digits 0-9999
-        Schooners = 0 ;
-        Ship = 0 ; /*SHIPRT */;   // current ship character
-        m_nShiploc = 0 ;     // current ship location
-        m_nGencur = 0 ;      // current Generator location
-        Sprloc = 0 ;
-        Sprflg = 0 ;
+        SMonct = 0;      // Small Monster count
+        LMonct = 0;      // Large Monster count
+        Score10 = 0;      // Score (10,000)
+        Score = 0;       // Score - digits 0-9999
+        Schooners = 0;
+        Ship = 0; /*SHIPRT */
+        ;   // current ship character
+        m_nShiploc = 0;     // current ship location
+        m_nGencur = 0;      // current Generator location
+        Sprloc = 0;
+        Sprflg = 0;
 
-        MouseFlag= 0 ;     /* mouse installed         */
+        MouseFlag = 0;     /* mouse installed         */
 
-        gameBoard = new GameBoard(pTI99.getVideo()) ;
-        initChars();
+        gameBoard = new GameBoard(pTI99.getVideo());
+
         //if (MouseFlag = MOreset( &num_buttons) )
         //	MOsetpos(MOUSEX, MOUSEY) ;
-        themeSong() ;
-        dispLevelMenu() ;
-        Score = -1000 ;
-        Schooners = 9 ;
+        themeSong();
+        Score = -1000;
+        Schooners = 9;
+    }
+    public void start(){
+        dispLevelMenu();
 
         // -------- Start a new day --------------
-        while(playDay(++day)) ;
+        int day = 0;
+        playDay(++day);
+//        while(playDay(++day)) ;
 
     }
     public boolean playDay(int day)
@@ -1001,13 +1005,14 @@ public class TombstoneCity {
 //        final char szRule8[] ={"PANIC BUTTON \x82SPACE BAR"};
 //        final char szOut11[] ={"PRESS ANY KEY TO CONTINUE"};
 //
-//        KEYCODE	key ;
-//        m_nLevFlg = 0 ;
+        ITIKeyboard.TIKeycode	key ;
+        m_nLevFlg = 0 ;
 //
 //        do
 //        {
-//
-//            gameBoard.PreGameScreen();
+
+            gameBoard.preGameScreen();
+            gameBoard.displayLevelMenu();
 //            gameBoard.Video()->DisplayAt(6,8,"LEVEL 1 = NOVICE") ;
 //            gameBoard.Video()->DisplayAt(7,8,"LEVEL 2 = MASTER") ;
 //            gameBoard.Video()->DisplayAt(8,8,"LEVEL 3 = INSANE") ;
@@ -1015,7 +1020,8 @@ public class TombstoneCity {
 //            gameBoard.Video()->DisplayAt(14,5, "PRESS AID FOR RULES") ;
 //            //gameBoard.Video()->refresh() ;
 //
-//            key = m_pTI99->getKey() ;
+
+            key = this.virtualTI.getKeyboard().scan() ;
 //            if (key == '1')
 //            {
 //                m_nLevFlg = 1 ;
@@ -1053,84 +1059,16 @@ public class TombstoneCity {
 //        } while(m_nLevFlg == 0 );
     }
 
-// --------------------------------------------------------------------------------
-//
-// InitChars
-//
-//  Description:	Initialize character patterns used for game
-//
-//  Parameters:		None.
-//
-//  Returns:		None.
-//
-// --------------------------------------------------------------------------------
 
-    void initChars()
+
+    void displayScore(int score)
     {
-//        static BYTE colors[] = { 0x1b,0x1b,0x1b,0x1b,0x1b,0x1b,0x1b,0x1b,0x6b,0x4b,0xcb,0x1b,0x1b,0x4b,0xdb,0x47} ;
-//
-//
-//        gameBoard.Video()->Char(92, (unsigned char *)"\x3c\x42\x99\x0a1\x0a1\x099\x042\x03c") ;    // copyright
-//        gameBoard.Video()->Char(93, (unsigned char *)"\x08\x2a\x3a\x0e\x08\x08\x7e\x0ff") ;       	// Tombstone
-//        gameBoard.Video()->Char(94, (unsigned char *)"\x00\x00\x00\x00\x00\x00\x00\x0ff") ;       	// Top Edge
-//        gameBoard.Video()->Char(95, (unsigned char *)"\x0ff\x0ff\x00\x00\x00\x00\x00\x00") ;      	// Bottom Edge
-//        gameBoard.Video()->Char(96, (unsigned char *)"\x0ff\x0ff\x0ff\x0ff\x0ff\x0ff\x0ff\x0ff") ; // border char
-//        gameBoard.Video()->Char(97, (unsigned char *)"\x96\x56\x38\x7c\x0bf\x3c\x52\x89");     	// explosion
-//
-//        /*   --- Ship ----  */
-//        gameBoard.Video()->Char(104,(unsigned char *) "\x00\x0e0\x70\x7e\x7e\x70\xe0\x00") ;      	// ship right
-//        gameBoard.Video()->Char(105,(unsigned char *) "\x00\x18\x18\x18\x3c\x7e\x7e\x42");     	// ship up
-//        gameBoard.Video()->Char(106,(unsigned char *) "\x42\x7e\x7e\x3c\x18\x18\x18\x00") ;       	// ship down
-//        gameBoard.Video()->Char(107,(unsigned char *) "\x00\x07\x0e\x7e\x7e\x0e\x07\x00") ;       	// ship left
-//        /* --- bullet   --- */
-//        gameBoard.Video()->Char(108, (unsigned char *)"\x00\x00\x00\x3c\x3c\x00\x00\x00") ;       	// bullet horz
-//        gameBoard.Video()->Char(109, (unsigned char *)"\x00\x00\x18\x18\x18\x18\x00\x00") ;        // bullet vert
-//
-//        /*   --- Large Monster --- */
-//        gameBoard.Video()->Char(0, (unsigned char *)"\x0bd\x07f\x0ff\x0ff\x07e\x03c\x042\x081") ; /* large monst1 */
-//        gameBoard.Video()->Char(1, (unsigned char *)"\x03c\x07f\x0ff\x0ff\x07e\x03c\x042\x042") ; /* large monst2 */
-//        gameBoard.Video()->Char(2, (unsigned char *)"\x0fc\x0fc\x0c0\x0c0\x0c0\x0c0\x0c0\x0c0") ; /* Tombstone    */
-//        gameBoard.Video()->Char(3, (unsigned char *)"\x0fc\x0fc\x0cc\x0cc\x0cc\x0cc\x0cc\x0cc") ; /* Title     */
-//        gameBoard.Video()->Char(4, (unsigned char *)"\x08\x2a\x3a\x0e\x08\x08\x7e\x0ff") ;       	// Tombstone
-//        gameBoard.Video()->Char(5,(unsigned char *) "\x00\x5a\x3c\x7e\x7e\x3c\x5a\x00") ;     	// small monst1
-//        gameBoard.Video()->Char(6,(unsigned char *)"\x00\x18\x0ff\x7e\x7e\x0ff\x18\x00") ;      	// small monst2
-//        gameBoard.Video()->Char(112, (unsigned char *)"\x0bd\x07f\x0ff\x0ff\x07e\x03c\x042\x081") ; /* large monst1 */
-//        gameBoard.Video()->Char(113, (unsigned char *)"\x03c\x07f\x0ff\x0ff\x07e\x03c\x042\x042") ; /* large monst2 */
-//
-//        gameBoard.Video()->Char(120, (unsigned char *)"\x0fc\x0fc\x0c0\x0c0\x0c0\x0c0\x0c0\x0c0") ; /* Tombstone    */
-//        gameBoard.Video()->Char(121, (unsigned char *)"\x0fc\x0fc\x0cc\x0cc\x0cc\x0cc\x0cc\x0cc") ; /* Title     */
-//        gameBoard.Video()->Char(122, (unsigned char *)"\x0cc\x0cc\x0cc\x0cc\x0cc\x0cc\x0fc\x0fc") ; /* Title     */
-//        gameBoard.Video()->Char(123, (unsigned char *)"\x0fc\x0fc\x0c0\x0c0\x0c0\x0c0\x0fc\x0fc") ; /* Title     */
-//        gameBoard.Video()->Char(124, (unsigned char *)"\x0cc\x0cc\x0cc\x0cc\x0cc\x0cc\x0cc\x0cc") ; /* Title     */
-//        gameBoard.Video()->Char(125, (unsigned char *)"\x0c0\x0c0\x0c0\x0c0\x0c0\x0c0\x0fc\x0fc") ; /* Title     */
-//        gameBoard.Video()->Char(126, (unsigned char *)"\x084\x0cc\x0fc\x0fc\x0cc\x0cc\x0cc\x0cc") ; /* Title     */
-//        gameBoard.Video()->Char(127, (unsigned char *)"\x0cc\x0cc\x0ec\x0fc\x0dc\x0cc\x0cc\x0cc") ; /* Title     */
-//        gameBoard.Video()->Char(128, (unsigned char *)"\x00c\x00c\x00c\x00c\x00c\x00c\x0fc\x0fc") ; /* Title     */
-//        gameBoard.Video()->Char(129, (unsigned char *)"\x0fc\x0fc\x030\x030\x030\x030\x030\x030") ; /* Title     */
-//        gameBoard.Video()->Char(130, (unsigned char *)"\x030\x030\x030\x030\x030\x030\x030\x030") ; /* Title     */
-//        gameBoard.Video()->Char(131, (unsigned char *)"\x0fc\x0fc\x0c0\x0c0\x0c0\x0c0\x0f0\x0f0") ; /* Title     */
-//        gameBoard.Video()->Char(132, (unsigned char *)"\x0fc\x0fc\x0cc\x0cc\x0cc\x0cc\x0fc\x0fc") ; /* Title     */
-//        gameBoard.Video()->Char(133, (unsigned char *)"\x000\x000\x000\x000\x000\x000\x000\x000") ; /* Title blank  */
-//        gameBoard.Video()->Char(134, (unsigned char *)"\x000\x000\x000\x000\x000\x000\x000\x000") ; /* safe area blank */
-//        gameBoard.Video()->Char(135, (unsigned char *)"\x000\x000\x000\x000\x000\x000\x000\x000") ; /* unsed     */
-//        gameBoard.Video()->Char(136, (unsigned char *)"\x080\x0c0\x0e0\x0f0\x0f8\x0fc\x0fe\x0ff") ; /* Left below diag */
-//        gameBoard.Video()->Char(137, (unsigned char *)"\x001\x003\x007\x00f\x01f\x03f\x07f\x0ff") ; /* right below diag*/
-//        gameBoard.Video()->Char(138, (unsigned char *)"\x0ff\x0ff\x0ff\x0ff\x0ff\x0ff\x0ff\x0ff") ; /* solid     */
-//        gameBoard.Video()->Char(139, (unsigned char *)"\x080\x0e0\x0f8\x0fe\x0ff\x0ff\x0ff\x0ff") ;
-//        gameBoard.Video()->Char(140, (unsigned char *)"\x000\x000\x000\x000\x080\x0e0\x0f8\x0ff") ;
-//        gameBoard.Video()->Char(141, (unsigned char *)"\x000\x000\x000\x000\x001\x007\x01f\x0ff") ;
-//        gameBoard.Video()->Char(142, (unsigned char *)"\x001\x007\x01f\x07f\x0ff\x0ff\x0ff\x0ff") ;
-//        gameBoard.Video()->Char(152, (unsigned char *)"\x0ff\x0ff\x0c3\x0c3\x0c3\x0c3\x0ff\x0ff") ; /* safe area col. */
-//        /* --- Small Monster    --- */
-//        gameBoard.Video()->Char(144,(unsigned char *) "\x00\x5a\x3c\x7e\x7e\x3c\x5a\x00") ;     	// small monst1
-//        gameBoard.Video()->Char(145,(unsigned char *)"\x00\x18\x0ff\x7e\x7e\x0ff\x18\x00") ;      	// small monst2
-//
-//
-//        for (int i=0; i<16; i++)
-//        {
-//            gameBoard.Video()->color(i+3, colors[i]) ;
-//        }
+        //tiVideo.displayAt(23,8, "          ") ;
+        //DisplayNumeric(score,23,17) ;
+
     }
+
+
 
     static int     rand16 ;
 

@@ -9,6 +9,8 @@ public interface ITIVideo {
     void displayAt(int row, int col, int[] value);
     void displayAt(int row, int col, String value);
 
+    byte getChar(int screenLocation);
+
     void setColor(int charSet, byte color);
     void setChar(int charno, byte[] pattern);
 }

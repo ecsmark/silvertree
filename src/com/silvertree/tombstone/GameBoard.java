@@ -8,6 +8,7 @@ public class GameBoard {
 
     final static  int MAXROW = 23 ;
     final static int MAXCOL = 31 ;
+    final static int MAXGRAVEPAIRS = 30 ;
 
     final static int BORDER[] =
             {96, 96, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32,
@@ -51,53 +52,52 @@ public class GameBoard {
         blankScreen() ;
         writeChar(0,2, 136) ;       /* write Mountain char    */
         writeChar(0,29,137) ;
-        writeChar(0,27, Characters.Grave.ordinal()) ;
+        writeChar(0,27, Characters.Grave.getChrIndex()) ;
         tiVideo.displayAt(1,2, outl1);
         tiVideo.displayAt(2,2, outl2) ;
 
 
     }
 
-    void draw(int day)
+    void displayDay(int day)
     {
-        final  char    outl6[] =new char [] {152, 134, 152,134, 152, 134, 152, 0	};
-        final  char    outl7[] = new char [] {134, 134, 134,134, 134, 134, 134, 0	};
+        final  int[] outl6 =new int[] {152, 134, 152,134, 152, 134, 152, 0	};
+        final  int[] outl7 = new int [] {134, 134, 134,134, 134, 134, 134, 0};
 
-/*
+
         for (int i=0; i<28; i++)
         {
-            writeChar(21, 2+i, BOTTOMEDGE) ;
+            writeChar(21, 2+i, Characters.BottomEdge.getChrIndex()) ;
 
         }
 
         tiVideo.displayAt(22,3, "DAY  POPULATION  SCHOONERS") ;
         int row = 8 ;
-        for (i=0; i<3; i++)
+        for (int i=0; i<3; i++)
         {
-            tiVideo.DisplayAt(row++,12, outl6) ;    // safe area
-            tiVideo.DisplayAt(row++,12, outl7) ;
+            tiVideo.displayAt(row++,12, outl6) ;    // safe area
+            tiVideo.displayAt(row++,12, outl7) ;
         }
 
-        tiVideo.DisplayAt(row++,12, outl6) ;     // safe area
+        tiVideo.displayAt(row++,12, outl6) ;     // safe area
 
         // ----------------------------------------------------
         // Throw up pairs of graves randomly
         // ----------------------------------------------------
-        int graves = min((day*4+1), MAXGRAVEPAIRS)   ;
+        int graves = Math.min((day*4+1), MAXGRAVEPAIRS)   ;
 
         for (int n=0; n < graves; )
         {
             // find a blank random location
-            short grave1=  RandomBlank() ;
-            short grave2 = Neighbor((randno () >> 13) )+grave1 ;
-            if (AreAllNeighborsBlank(grave1) && AreAllNeighborsBlank(grave2))
+            int grave1=  RandomBlank() ;
+            int grave2 = neighbor(((short)((Math.random())*1000.0) >> 13) )+grave1 ;
+            if (areAllNeighborsBlank(grave1) /*&& areAllNeighborsBlank(grave2)*/)
             {
-                writeChar(grave1, Characters.Grave.ordinal()) ;
-                writeChar(grave2, Characters.Grave.ordinal()) ;
+                writeChar(grave1/32, grave1 % 32, Characters.Grave.getChrIndex()) ;
+                //writeChar(grave2/32, grave2 % 32, Characters.Grave.getChrIndex()) ;
                 n++ ;
             }
         }
-        */
 
     }
 
@@ -108,9 +108,6 @@ public class GameBoard {
 
     }
 
-    void displayDay(int day){
-
-    }
 
     public void displayLevelMenu(){
         tiVideo.displayAt(6,8,"LEVEL 1 = NOVICE") ;
@@ -120,6 +117,38 @@ public class GameBoard {
             tiVideo.displayAt(14,5, "PRESS AID FOR RULES") ;
     }
 
+    int s_neighborCells[] = new int[] {	-32, -31, 1, 33, 32, 31, -1, -33 };
+
+    boolean areAllNeighborsBlank(int screenloc)
+    {
+        boolean areBlank = true ;
+        for (int i=0; i< 8 && areBlank; i++)
+        {
+            areBlank = (tiVideo.getChar(screenloc+neighbor(i)) == ' ') ;
+        }
+        return( areBlank ) ;
+    }
+
+    int neighbor(int cell)
+    {
+        assert(cell > -1 && cell < 8) ;
+        return(s_neighborCells[cell]);
+
+    }
+
+    int RandomBlank()
+    {
+
+        int blank_loc ;
+
+        do
+        {
+            blank_loc = (int) (Math.random() *100000.0);
+            blank_loc = (blank_loc >> 7)+128 ;
+        } while (tiVideo.getChar(blank_loc) != ' ') ;
+
+        return(blank_loc) ;
+    }
     private void initColors(){
         byte[] colors ={0x1b,0x1b,0x1b,0x1b,0x1b,0x1b,0x1b,0x1b,0x6b,0x4b,(byte)0xcb,0x1b,0x1b,0x4b,(byte) 0xdb,0x47};
         for (int i=0; i < colors.length; i++ )  {

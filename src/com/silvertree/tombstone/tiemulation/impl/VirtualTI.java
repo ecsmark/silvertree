@@ -22,9 +22,12 @@ public class VirtualTI implements IVirtualTI {
     public ITIVideo getVideo() {
         return video;
     }
+
+    @Override
     public ITIKeyboard getKeyboard(){
         return keyboard ;
     }
+
     ITIVideo createVideo(Pane pane){
         video = new TIVideo(pane);
         return video ;

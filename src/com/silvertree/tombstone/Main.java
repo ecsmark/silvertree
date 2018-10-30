@@ -22,11 +22,13 @@ public class Main extends Application {
         Scene emulatorScene = new Scene(root, 300, 275);
         primaryStage.setScene(emulatorScene);
         createEmulator(emulatorScene, root);
-        GameBoard gameBoard = new GameBoard(virtualTI.getVideo());
-        gameBoard.blankScreen();
-        gameBoard.preGameScreen();
-        gameBoard.displayLevelMenu();
+        TombstoneCity game = new TombstoneCity(virtualTI);
+//        GameBoard gameBoard = new GameBoard(virtualTI.getVideo());
+//        gameBoard.blankScreen();
+//        gameBoard.preGameScreen();
+//        gameBoard.displayLevelMenu();
         showEmulator(primaryStage) ;
+        game.start() ;
 
     }
 

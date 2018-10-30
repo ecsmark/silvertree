@@ -281,6 +281,11 @@ public class TIVideo implements ITIVideo {
     }
 
     @Override
+    public byte getChar(int screenLocation) {
+        return vdpRam.ScreenImage[screenLocation];
+    }
+
+    @Override
     public void setChar(int charno, byte[] pat)
     {
         for (int i=0; i < pat.length ; ++i)
