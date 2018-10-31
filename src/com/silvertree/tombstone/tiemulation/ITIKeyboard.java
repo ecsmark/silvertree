@@ -15,13 +15,27 @@ public interface ITIKeyboard {
          BACK (5),			/* FCTN 9  */
          QUIT(5),			/* FCTN =  */
 
+         DIGIT0(30),
+         DIGIT1(31),
+         DIGIT2(32),
+         DIGIT3(33),
+         DIGIT4(34),
+         DIGIT5(35),
+         DIGIT6(36),
+         DIGIT7(37),
+         DIGIT8(38),
+         DIGIT9(39),
+
          RIGHT(0x80),
          LEFT(0x81),
          UP(0x82),
-         DOWN(0x83) ;
-        TIKeycode(int val){
+         DOWN(0x83) ,
 
+         UNMAPPED(0);
+         TIKeycode(int val){
+            this.val = val ;
         }
+        public int val ;
     }
     class TIKeyboardEvent extends TIEmulatorEvent {
         private TIKeycode keycode ;

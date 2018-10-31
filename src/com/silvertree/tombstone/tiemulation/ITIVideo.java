@@ -13,4 +13,7 @@ public interface ITIVideo {
 
     void setColor(int charSet, byte color);
     void setChar(int charno, byte[] pattern);
+
+    final static int NumRows = 24 ;
+    final static int NumColums = 32 ;
 }

@@ -18,7 +18,8 @@ public class TombstoneCity {
     int   	m_nGencur  ;	/* current Generator location   */
     int   	Sprloc  ;
     int   	Sprflg  ;
-    int		Ship ;
+    Characters		Ship ;
+    int     day = 0 ;
     int		LMontab[] = new int [24] ;      /* Large monster table     */
     int		SMontab[] = new int [40] ;      /* Small monster table     */
     int		LMontb[] ;       /* ptr to large monster table   */
@@ -37,9 +38,9 @@ public class TombstoneCity {
         Score10 = 0;      // Score (10,000)
         Score = 0;       // Score - digits 0-9999
         Schooners = 0;
-        Ship = 0; /*SHIPRT */
+        Ship = Characters.ShipRight;
         ;   // current ship character
-        m_nShiploc = 0;     // current ship location
+        m_nShiploc = GameBoard.INITSHIPLOC;     // current ship location
         m_nGencur = 0;      // current Generator location
         Sprloc = 0;
         Sprflg = 0;
@@ -56,13 +57,71 @@ public class TombstoneCity {
     }
     public void start(){
         dispLevelMenu();
+        virtualTI.getVideo().refresh();
 
-        // -------- Start a new day --------------
-        int day = 0;
-        playDay(++day);
-//        while(playDay(++day)) ;
 
     }
+
+    private void handleGamePlayKeys(ITIKeyboard.TIKeyboardEvent event) {
+        System.out.println("handleGamePlayKeys "+event.getKeyCode());
+        switch(event.getKeyCode()){
+//            case FIREKEY1:
+//            case FIREKEY2:
+//            case FIREKEY3:
+//                c = FIREKEY ;
+//                fire();
+//                break;
+//
+//            case PANICKEY:
+//                panic_key() ;
+//                break;
+//
+            case RIGHT:
+                movshp(Characters.ShipRight, 1);
+                break;
+            case LEFT:
+                movshp(Characters.ShipLeft, -1 ) ;
+                break;
+            case DOWN:
+                movshp(Characters.ShipDown, 32) ;
+                break;
+            case UP:
+                movshp(Characters.ShipUp, -32) ;
+                break;
+//            case 0:
+//            {
+//                int x ;
+//                int y ;
+//                bool fireButton ;
+//                m_pTI99->checkJoy(x, y, fireButton) ;
+//                if (fireButton)
+//                {
+//                    fire() ;
+//                }
+//                else if (x > 0 )
+//                {
+//                    movshp(SHIPRT, 1);
+//                    Msg("got an x > 0") ;
+//                }
+//                else if (x < 0 )
+//                {
+//                    movshp(SHIPLT, -1);
+//                    Msg("got an x < 0") ;
+//                }
+//                else if (y < 0)
+//                {
+//                    movshp(SHIPUP, -32);
+//                }
+//                else if (y > 0 )
+//                {
+//                    movshp(SHIPDN, 32);
+//                }
+//            }
+        }
+        virtualTI.getVideo().refresh();
+
+    }
+
     public boolean playDay(int day)
     {
 
@@ -84,6 +143,20 @@ public class TombstoneCity {
        return( !bEndGame );
 
     }
+    void gameBegin(){
+        System.out.println("gameBegin");
+        virtualTI.getKeyboard().onKeyPressed(new TIKeyboardEventListener<ITIKeyboard.TIKeyboardEvent>() {
+            @Override
+            public void handle(TIEmulatorEvent event) {
+                handleGamePlayKeys((ITIKeyboard.TIKeyboardEvent) event);
+            }
+        });
+
+        // -------- Start a new day --------------
+        day = 0;
+        playDay(++day);
+    }
+
     void gameEnd()
     {
 
@@ -280,27 +353,29 @@ public class TombstoneCity {
     // ----------------------------------------------------------------------- 
 //  movshp() - move ship 
 // ----------------------------------------------------------------------- 
-    boolean movshp(int c, int offset)
+    boolean movshp(Characters shipCharacter, int offset)
     {
-//        int     newshiploc ;
-//
-//        if (c != Ship)	/* check to see if orientation changes	    */
-//        {
-//            gameBoard.WriteChar(m_nShiploc, c) ;
-//            Ship = c ;
-//            offset = 0 ;
-//        }
-//
-//        if (LMonct == 0)
-//        {
-//            /* kill time of same depressed	    */
-//        }
-//        newshiploc = offset + m_nShiploc ;
-//        if (gameBoard.GetChar(newshiploc) != ' ' && gameBoard.GetChar(newshiploc) != SAFEAREABL)
-//            return( false ) ;
-//        gameBoard.WriteChar(newshiploc, Ship) ;
-//        gameBoard.PutBlank(m_nShiploc) ;
-//        m_nShiploc = newshiploc ;
+        System.out.println("movshp("+shipCharacter+","+offset+")");
+        int     newshiploc ;
+
+        if (shipCharacter != Ship)	/* check to see if orientation changes	    */
+        {
+            gameBoard.writeChar(m_nShiploc, shipCharacter.getChrIndex()) ;
+            Ship = shipCharacter ;
+            offset = 0 ;
+        }
+
+        if (LMonct == 0)
+        {
+            /* kill time of same depressed	    */
+        }
+        newshiploc = offset + m_nShiploc ;
+        int currentChr = gameBoard.getChar(newshiploc);
+        if ((currentChr != ' ' && currentChr !=  Characters.SafeAreaBL.getChrIndex())|| currentChr ==  Ship.getChrIndex())
+            return( false ) ;
+        gameBoard.writeChar(newshiploc, Ship.getChrIndex()) ;
+        gameBoard.putBlank(m_nShiploc) ;
+        m_nShiploc = newshiploc ;
         return( false ) ;
     }
 
@@ -1003,72 +1078,44 @@ public class TombstoneCity {
 
     void dispLevelMenu()
     {
-//
         ITIKeyboard.TIKeycode	key ;
         m_nLevFlg = 0 ;
-//
-//        do
-//        {
 
-            gameBoard.preGameScreen();
-            gameBoard.displayLevelMenu();
-//            gameBoard.Video()->DisplayAt(6,8,"LEVEL 1 = NOVICE") ;
-//            gameBoard.Video()->DisplayAt(7,8,"LEVEL 2 = MASTER") ;
-//            gameBoard.Video()->DisplayAt(8,8,"LEVEL 3 = INSANE") ;
-//            gameBoard.Video()->DisplayAt(10,10, "YOUR CHOICE?") ;
-//            gameBoard.Video()->DisplayAt(14,5, "PRESS AID FOR RULES") ;
-//            //gameBoard.Video()->refresh() ;
-//
-            virtualTI.getKeyboard().onKeyPressed(new TIKeyboardEventListener<ITIKeyboard.TIKeyboardEvent>() {
-                @Override
-                public void handle(TIEmulatorEvent event) {
-                    handleDisplayLevelMenuSelection(event);
-                }
-            });
-//            key = this.virtualTI.getKeyboard().scan() ;
-//            if (key == '1')
-//            {
-//                m_nLevFlg = 1 ;
-//                m_nSpeed = 1 ;
-//            }
-//            else if (key == '2')
-//            {
-//                m_nLevFlg = 1 ;
-//                m_nSpeed = 2 ;
-//            }
-//            else if (key == '3')
-//            {
-//                m_nLevFlg = 2;
-//                m_nSpeed = 3 ;
-//            }
-//            else if (key == TIKEYAID)
-//            {
-//
-//                gameBoard.PreGameScreen() ;
-//                gameBoard.Video()->DisplayAt(5,4, szRule1) ;
-//                gameBoard.Video()->DisplayAt(6,4, szRule2) ;
-//                gameBoard.Video()->DisplayAt(8,4, szRule3) ;
-//                gameBoard.Video()->DisplayAt(9,4, szRule4) ;
-//                gameBoard.Video()->DisplayAt(10,4,szRule5 ) ;
-//                gameBoard.Video()->DisplayAt(12,4,szRule6 ) ;
-//                gameBoard.Video()->DisplayAt(13,4,szRule7 ) ;
-//                gameBoard.Video()->DisplayAt(14,4,szRule8 ) ;
-//                gameBoard.Video()->DisplayAt(21,4, szOut11) ;
-//                gameBoard.WriteChar(7, 17, 0x82) ;
-//                gameBoard.WriteChar(11,17, 0x82) ;
-//                //gameBoard.Video()->refresh() ;
-//                key = m_pTI99->getKey() ;
-//            }
-//
-//        } while(m_nLevFlg == 0 );
+        gameBoard.preGameScreen();
+        gameBoard.displayLevelMenu();
+        virtualTI.getKeyboard().onKeyPressed(new TIKeyboardEventListener<ITIKeyboard.TIKeyboardEvent>() {
+            @Override
+            public void handle(TIEmulatorEvent event) {
+                handleDisplayLevelMenuSelection(event);
+            }
+        });
     }
 
     private void handleDisplayLevelMenuSelection(TIEmulatorEvent event) {
         System.out.println("handleDisplayLevelMenuSelection event="+((ITIKeyboard.TIKeyboardEvent)event).getKeyCode().toString());
-        if (((ITIKeyboard.TIKeyboardEvent)event).getKeyCode().equals(ITIKeyboard.TIKeycode.AID)){
-            displayHelpMenu();
-            virtualTI.getVideo().refresh();
+        switch(((ITIKeyboard.TIKeyboardEvent)event).getKeyCode()){
+            case AID:
+                displayHelpMenu();
+                virtualTI.getVideo().refresh();
+                return ;
+            case DIGIT1:
+                m_nLevFlg = 1 ;
+                m_nSpeed = 1 ;
+                break;
+            case DIGIT2:
+                m_nLevFlg = 1 ;
+                m_nSpeed = 2 ;
+                break;
+            case DIGIT3:
+                m_nLevFlg = 2 ;
+                m_nSpeed = 3 ;
+                break;
+            default:
+                return ;
         }
+        gameBegin();
+        virtualTI.getVideo().refresh();
+
     }
 
     private void displayHelpMenu() {

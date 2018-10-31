@@ -54,9 +54,60 @@ public class TIKeyboard implements ITIKeyboard {
                 currentKey = event.getCode() ;
                 if (onKeyPressedEventHandler != null){
                     System.out.println("calling event handler ");
-                    onKeyPressedEventHandler.handle(new TIKeyboardEvent(TIKeycode.AID));
+                    onKeyPressedEventHandler.handle(new TIKeyboardEvent(translate(event.getCode())));
                 }
             }
         });
+    }
+    private TIKeycode translate(KeyCode keyCode){
+        TIKeycode tiKeyCode = TIKeycode.UNMAPPED ;
+        if (keyCode.isFunctionKey()){
+            tiKeyCode = translateFunctionKey(keyCode);
+        } else if (keyCode.isArrowKey()){
+            tiKeyCode = translateArrowKey(keyCode);
+        } else if (keyCode.isDigitKey())
+            tiKeyCode = translateDigitKey(keyCode);
+
+        System.out.println("translate("+keyCode.getName()+" to "+tiKeyCode.toString());
+        return tiKeyCode;
+    }
+
+    private TIKeycode translateDigitKey(KeyCode keyCode) {
+        switch(keyCode){
+            case DIGIT0:
+                return TIKeycode.DIGIT0 ;
+            case DIGIT1:
+                return TIKeycode.DIGIT1;
+            case DIGIT2:
+                return TIKeycode.DIGIT2;
+            case DIGIT3:
+                return TIKeycode.DIGIT3 ;
+            case DIGIT4:
+                return TIKeycode.DIGIT4;
+        }
+        return TIKeycode.UNMAPPED;
+    }
+
+    private TIKeycode translateArrowKey(KeyCode keyCode) {
+        if (keyCode == KeyCode.RIGHT)
+            return TIKeycode.RIGHT;
+        else if (keyCode == KeyCode.LEFT)
+            return TIKeycode.LEFT ;
+        else if (keyCode == KeyCode.UP)
+            return TIKeycode.UP;
+        else if (keyCode == KeyCode.DOWN)
+            return TIKeycode.DOWN;
+        return(TIKeycode.UNMAPPED);
+    }
+
+    private TIKeycode translateFunctionKey(KeyCode keyCode) {
+        switch(keyCode)
+        {
+            case F1:
+                return TIKeycode.AID ;
+            case F8:
+                return TIKeycode.REDO;
+        }
+        return TIKeycode.UNMAPPED ;
     }
 }

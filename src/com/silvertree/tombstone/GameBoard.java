@@ -9,7 +9,7 @@ public class GameBoard {
     final static  int MAXROW = 23 ;
     final static int MAXCOL = 31 ;
     final static int MAXGRAVEPAIRS = 30 ;
-    final static int INITSHIPLOC = 367 ;
+    public final static int INITSHIPLOC = 367 ;
 
     final static int BORDER[] =
             {96, 96, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32,
@@ -40,7 +40,33 @@ public class GameBoard {
             }
         }
     }
-    void writeChar(int row, int col, int  chr){
+    public int getChar(int position){
+        byte byteValue = tiVideo.getChar(position);
+        return ((int)byteValue)   & 0x00ff  ;
+    }
+
+    public void putBlank(int position){
+        putBlank(position / ITIVideo.NumColums, position % ITIVideo.NumColums);
+    }
+    public void putBlank(int row, int col)
+    {
+
+        int     c = ' ' ;
+
+        //   check for location in safe area
+        if (row >= 8 && row <= 14)
+        {
+            if (col >=12 && col <= 18)
+                c = Characters.SafeAreaBL.getChrIndex() ;
+        }
+
+        writeChar(row, col, c) ;
+    }
+
+    public void writeChar(int position, int chr){
+        writeChar(position / ITIVideo.NumColums, position % ITIVideo.NumColums, chr);
+    }
+    public void writeChar(int row, int col, int  chr){
         tiVideo.wrChar(row, col,  chr);
     }
 
@@ -98,8 +124,8 @@ public class GameBoard {
             int grave2 = neighbor(((short)(randno()) >> 13) )+grave1 ;
             if (areAllNeighborsBlank(grave1) && areAllNeighborsBlank(grave2))
             {
-                writeChar(grave1/32, grave1 % 32, Characters.Grave.getChrIndex()) ;
-                writeChar(grave2/32, grave2 % 32, Characters.Grave.getChrIndex()) ;
+                writeChar(grave1/ITIVideo.NumColums, grave1 % ITIVideo.NumColums, Characters.Grave.getChrIndex()) ;
+                writeChar(grave2/ITIVideo.NumColums, grave2 % ITIVideo.NumColums, Characters.Grave.getChrIndex()) ;
                 n++ ;
             }
         }
