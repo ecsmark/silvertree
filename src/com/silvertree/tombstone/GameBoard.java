@@ -9,6 +9,7 @@ public class GameBoard {
     final static  int MAXROW = 23 ;
     final static int MAXCOL = 31 ;
     final static int MAXGRAVEPAIRS = 30 ;
+    final static int INITSHIPLOC = 367 ;
 
     final static int BORDER[] =
             {96, 96, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32,
@@ -17,6 +18,10 @@ public class GameBoard {
             };
 
     ITIVideo tiVideo ;
+
+    int Ship = Characters.ShipRight.getChrIndex() ;
+    int currentShipLocation = INITSHIPLOC ;
+
     public GameBoard(ITIVideo tiVideo){
         this.tiVideo = tiVideo ;
         initChars();
@@ -59,10 +64,10 @@ public class GameBoard {
 
     }
 
-    void displayDay(int day)
+    void draw(int day)
     {
-        final  int[] outl6 =new int[] {152, 134, 152,134, 152, 134, 152, 0	};
-        final  int[] outl7 = new int [] {134, 134, 134,134, 134, 134, 134, 0};
+        final  int[] outl6 =new int[] {152, 134, 152,134, 152, 134, 152	};
+        final  int[] outl7 = new int [] {134, 134, 134,134, 134, 134, 134};
 
 
         for (int i=0; i<28; i++)
@@ -90,24 +95,51 @@ public class GameBoard {
         {
             // find a blank random location
             int grave1=  RandomBlank() ;
-            int grave2 = neighbor(((short)((Math.random())*1000.0) >> 13) )+grave1 ;
-            if (areAllNeighborsBlank(grave1) /*&& areAllNeighborsBlank(grave2)*/)
+            int grave2 = neighbor(((short)(randno()) >> 13) )+grave1 ;
+            if (areAllNeighborsBlank(grave1) && areAllNeighborsBlank(grave2))
             {
                 writeChar(grave1/32, grave1 % 32, Characters.Grave.getChrIndex()) ;
-                //writeChar(grave2/32, grave2 % 32, Characters.Grave.getChrIndex()) ;
+                writeChar(grave2/32, grave2 % 32, Characters.Grave.getChrIndex()) ;
                 n++ ;
             }
         }
+        //   put ship to screen in safe area
+
+        currentShipLocation = INITSHIPLOC ;
+        tiVideo.wrChar(currentShipLocation/32, currentShipLocation%32, Ship) ;
+
 
     }
+
+
 
     public void displayScore(int score) {
+        tiVideo.displayAt(23,8, "          ") ;
+        DisplayNumeric(score,23,17) ;
 
+    }
+    public void displayDay(int day){
+        DisplayNumeric(day, 23, 5);
+    }
+
+    void DisplayNumeric(int val, int row, int col)
+    {
+
+        while (val > 0)
+        {
+            int rem = val % 10 ;
+            int c = rem + '0' ;
+            tiVideo.wrChar(row, col--, c) ;
+            val = val / 10 ;
+        }
     }
     void displaySchooners(int numberSchooners){
-
+        DisplayNumeric(numberSchooners, 23, 28);
     }
 
+    public void safeAreaBlueOnBlue(){
+        tiVideo.setColor(19,(byte) 0x44);
+    }
 
     public void displayLevelMenu(){
         tiVideo.displayAt(6,8,"LEVEL 1 = NOVICE") ;
@@ -116,7 +148,31 @@ public class GameBoard {
             tiVideo.displayAt(10,10, "YOUR CHOICE?") ;
             tiVideo.displayAt(14,5, "PRESS AID FOR RULES") ;
     }
+    public void displayHelpMenu(){
+        final String szRule1 ="MOVE SCHOONER\u0082 ARROW KEYS" ;
+        final String szRule2 ="FIRE MISSILE \u0082Q/Y/INSERT" ;
+        final String szRule3 ="] SAGUARO    \u0082  0 POINTS";
+        final String szRule4 ="\u0090 TUMBLEWEED \u0082 100 POINTS";
+        final String szRule5 = "p MORG       \u0082 150 POINTS";
+        final String szRule6 ="RESTART GAME \u0082REDO";
+        final String szRule7 ="SELECT LEVEL \u0082 BACK";
+        final String szRule8 ="PANIC BUTTON \u0082SPACE BAR";
+        final String szOut11 ="PRESS ANY KEY TO CONTINUE";
 
+        preGameScreen() ;
+        tiVideo.displayAt(5,4, szRule1) ;
+        tiVideo.displayAt(6,4, szRule2) ;
+        tiVideo.displayAt(8,4, szRule3) ;
+        tiVideo.displayAt(9,4, szRule4) ;
+        tiVideo.displayAt(10,4,szRule5 ) ;
+        tiVideo.displayAt(12,4,szRule6 ) ;
+        tiVideo.displayAt(13,4,szRule7 ) ;
+        tiVideo.displayAt(14,4,szRule8 ) ;
+        tiVideo.displayAt(21,4, szOut11) ;
+        tiVideo.wrChar(7, 17, 0x82) ;
+        tiVideo.wrChar(11,17, 0x82) ;
+
+    }
     int s_neighborCells[] = new int[] {	-32, -31, 1, 33, 32, 31, -1, -33 };
 
     boolean areAllNeighborsBlank(int screenloc)
@@ -131,7 +187,7 @@ public class GameBoard {
 
     int neighbor(int cell)
     {
-        assert(cell > -1 && cell < 8) ;
+        if (cell < 0 ) cell = 0 ;
         return(s_neighborCells[cell]);
 
     }
@@ -139,12 +195,11 @@ public class GameBoard {
     int RandomBlank()
     {
 
-        int blank_loc ;
-
+        short blank_loc ;
         do
         {
-            blank_loc = (int) (Math.random() *100000.0);
-            blank_loc = (blank_loc >> 7)+128 ;
+            blank_loc = (short) (randno());
+            blank_loc = (short)((blank_loc >> 7)+128) ;
         } while (tiVideo.getChar(blank_loc) != ' ') ;
 
         return(blank_loc) ;
@@ -209,9 +264,18 @@ public class GameBoard {
         tiVideo.setChar(141, new byte[]{ 0x000, 0x000, 0x000, 0x000, 0x001, 0x007, 0x01f, (byte)0x0ff}) ;
         tiVideo.setChar(142, new byte[]{ 0x001, 0x007, 0x01f, 0x07f, (byte)0x0ff, (byte)0x0ff, (byte)0x0ff, (byte)0x0ff}) ;
         tiVideo.setChar(152, new byte[]{ (byte)0x0ff, (byte)0x0ff, (byte)0x0c3, (byte)0x0c3, (byte)0x0c3, (byte)0x0c3, (byte)0x0ff, (byte)0x0ff}) ; /* safe area col. */
-//        /* --- Small Monster    --- */
+        /* --- Small Monster    --- */
         tiVideo.setChar(144, new byte[]{ 0x00, 0x5a, 0x3c, 0x7e, 0x7e, 0x3c, 0x5a, 0x00}) ;     	// small monst1
         tiVideo.setChar(145,new byte[]{ 0x00, 0x18, (byte)0x0ff, 0x7e, 0x7e, (byte)0x0ff, 0x18, 0x00}) ;      	// small monst2
 
+    }
+
+    private static long rand16 = Math.abs((long) (Math.random() * 10000.0));
+    short randno()
+    {
+
+        int  n = (int)( 28645*rand16 +31417) ;
+        rand16 = n ;
+        return((short) (Math.abs(rand16) & 0x7fff) );
     }
 }

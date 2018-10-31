@@ -2,6 +2,8 @@ package com.silvertree.tombstone;
 
 import com.silvertree.tombstone.tiemulation.ITIKeyboard;
 import com.silvertree.tombstone.tiemulation.IVirtualTI;
+import com.silvertree.tombstone.tiemulation.TIEmulatorEvent;
+import com.silvertree.tombstone.tiemulation.TIKeyboardEventListener;
 
 public class TombstoneCity {
 
@@ -24,7 +26,9 @@ public class TombstoneCity {
     int		MouseFlag ;     /* mouse installed         */
     GameBoard gameBoard ;
     IVirtualTI virtualTI ;
-    
+
+    static final int BONUS = 1000 ;
+
     public TombstoneCity(IVirtualTI pTI99) {
         virtualTI = pTI99;
 
@@ -70,8 +74,12 @@ public class TombstoneCity {
         SMontb = SMontab ;
         LMonct = 0 ;
         gameBoard.preGameScreen() ;
-        gameBoard.displayDay(day) ;
+        gameBoard.displayDay(day);
+        Score += BONUS ;
+        gameBoard.displayScore(Score);
         gameBoard.displaySchooners(Schooners)  ;
+        gameBoard.safeAreaBlueOnBlue();
+        gameBoard.draw(day) ;
 
        return( !bEndGame );
 
@@ -995,15 +1003,6 @@ public class TombstoneCity {
 
     void dispLevelMenu()
     {
-//        final String szRule1 ={"MOVE SCHOONER\x82 ARROW KEYS"} ;
-//        final String szRule2 ={"FIRE MISSILE \x82Q/Y/INSERT"} ;
-//        final String szRule3 ={"] SAGUARO    \x82  0 POINTS"};
-//        final String szRule4 ={"\x090 TUMBLEWEED \x82 100 POINTS"};
-//        final char szRule5[] ={"p MORG       \x82 150 POINTS"};
-//        final char szRule6[] ={"RESTART GAME \x82REDO"};
-//        final char szRule7[] ={"SELECT LEVEL \x82 BACK"};
-//        final char szRule8[] ={"PANIC BUTTON \x82SPACE BAR"};
-//        final char szOut11[] ={"PRESS ANY KEY TO CONTINUE"};
 //
         ITIKeyboard.TIKeycode	key ;
         m_nLevFlg = 0 ;
@@ -1020,8 +1019,13 @@ public class TombstoneCity {
 //            gameBoard.Video()->DisplayAt(14,5, "PRESS AID FOR RULES") ;
 //            //gameBoard.Video()->refresh() ;
 //
-
-            key = this.virtualTI.getKeyboard().scan() ;
+            virtualTI.getKeyboard().onKeyPressed(new TIKeyboardEventListener<ITIKeyboard.TIKeyboardEvent>() {
+                @Override
+                public void handle(TIEmulatorEvent event) {
+                    handleDisplayLevelMenuSelection(event);
+                }
+            });
+//            key = this.virtualTI.getKeyboard().scan() ;
 //            if (key == '1')
 //            {
 //                m_nLevFlg = 1 ;
@@ -1059,17 +1063,29 @@ public class TombstoneCity {
 //        } while(m_nLevFlg == 0 );
     }
 
-
-
-    void displayScore(int score)
-    {
-        //tiVideo.displayAt(23,8, "          ") ;
-        //DisplayNumeric(score,23,17) ;
-
+    private void handleDisplayLevelMenuSelection(TIEmulatorEvent event) {
+        System.out.println("handleDisplayLevelMenuSelection event="+((ITIKeyboard.TIKeyboardEvent)event).getKeyCode().toString());
+        if (((ITIKeyboard.TIKeyboardEvent)event).getKeyCode().equals(ITIKeyboard.TIKeycode.AID)){
+            displayHelpMenu();
+            virtualTI.getVideo().refresh();
+        }
     }
 
+    private void displayHelpMenu() {
+        gameBoard.displayHelpMenu() ;
+        virtualTI.getKeyboard().onKeyPressed(new TIKeyboardEventListener<ITIKeyboard.TIKeyboardEvent>() {
+            @Override
+            public void handle(TIEmulatorEvent event) {
+                handleHelpMenuReturn(event);
+            }
+        });
+    }
 
-
+    private void handleHelpMenuReturn(TIEmulatorEvent event){
+        System.out.println("handleHelpMenuReturn");
+        dispLevelMenu();
+        virtualTI.getVideo().refresh();
+    }
     static int     rand16 ;
 
     short randno()
