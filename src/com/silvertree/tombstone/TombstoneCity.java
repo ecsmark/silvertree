@@ -7,6 +7,9 @@ import com.silvertree.tombstone.tiemulation.TIKeyboardEventListener;
 import com.silvertree.tombstone.tiemulation.impl.TIKeyboard;
 import javafx.animation.AnimationTimer;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class TombstoneCity {
 
     int   	m_nLevFlg  ;
@@ -22,11 +25,11 @@ public class TombstoneCity {
     int   	Sprflg  ;
     Characters		Ship ;
     int     day = 0 ;
+    List<Integer> SMontab ;
     int		LMontab[] = new int [24] ;      /* Large monster table     */
-    int		SMontab[] = new int [40] ;      /* Small monster table     */
     int		LMontb[] ;       /* ptr to large monster table   */
-    int		SMontb[];       /* ptr to small monster table   */
     int		MouseFlag ;     /* mouse installed         */
+
     GameBoard gameBoard ;
     IVirtualTI virtualTI ;
 
@@ -145,7 +148,7 @@ public class TombstoneCity {
         boolean bDoneWithDay = false ;
 
         LMontb = LMontab ;
-        SMontb = SMontab ;
+        SMontab = new ArrayList<>(40);
         LMonct = 0 ;
         gameBoard.preGameScreen() ;
         gameBoard.displayDay(day);
@@ -154,6 +157,8 @@ public class TombstoneCity {
         gameBoard.displaySchooners(Schooners)  ;
         gameBoard.safeAreaBlueOnBlue();
         gameBoard.draw(day) ;
+        if (SMonct == 0)
+            genSmallMonsters();
 
        return( !bEndGame );
 
@@ -230,28 +235,27 @@ public class TombstoneCity {
 
     void genSmallMonsters()
     {
+        System.out.println("genSmallMonsters");
+        for (int i=0; i< 20; i++)
+        {
+            int  screen_loc ;
+            Characters  c ;
 
-        SMontb = SMontab ;
-//        for (int i=0; i< 20; i++)
-//        {
-//            int  screen_loc ;
-//            int  c ;
-//
-//            do
-//            {
-//                screen_loc = (randno()>>7)+128 ;
-//            } while (gameBoard.GetChar(screen_loc) != ' ') ;
-//
-//            unsigned int r  = randno() ;
-//            if (r > (r &0xff))
-//                c = SMALL1 ;
-//            else
-//                c = SMALL2;
-//
-//            gameBoard.WriteChar(screen_loc, c) ;
-//		*SMontb++=screen_loc ;
-//            ++SMonct ;
-//        }
+            do
+            {
+                screen_loc = gameBoard.randomPlayAreaLocation() ;
+            } while (gameBoard.getChar(screen_loc) != ' ') ;
+
+            int r  = randno() ;
+            if (r > (r &0xff))
+                c = Characters.Small1 ;
+            else
+                c = Characters.Small2;
+
+            gameBoard.writeChar(screen_loc, c) ;
+		    SMontab.add(screen_loc );
+            ++SMonct ;
+        }
    }
 
 

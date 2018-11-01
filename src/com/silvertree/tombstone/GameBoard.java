@@ -3,13 +3,19 @@ package com.silvertree.tombstone;
 import com.silvertree.tombstone.tiemulation.ITIVideo;
 import javafx.scene.shape.Rectangle;
 
+import java.util.Random;
+import java.util.concurrent.ThreadLocalRandom;
+
 public class GameBoard {
     final static  Rectangle s_rectSafeArea = new Rectangle(12, 8, 19 , 13  );
 
     final static  int MAXROW = 23 ;
     final static int MAXCOL = 31 ;
     final static int MAXGRAVEPAIRS = 30 ;
+
     public final static int INITSHIPLOC = 367 ;
+    public final static int PLAYAREABG = 98;
+    public final static int PLAYAREAEND = 670;
 
     final static int BORDER[] =
             {96, 96, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32,
@@ -19,11 +25,12 @@ public class GameBoard {
 
     ITIVideo tiVideo ;
 
-    int Ship = Characters.ShipRight.getChrIndex() ;
+    Characters Ship = Characters.ShipRight;
     int currentShipLocation = INITSHIPLOC ;
 
     public GameBoard(ITIVideo tiVideo){
         this.tiVideo = tiVideo ;
+        initRandom() ;
         initChars();
         initColors();
         blankScreen();
@@ -112,7 +119,7 @@ public class GameBoard {
         blankScreen() ;
         writeChar(0,2, 136) ;       /* write Mountain char    */
         writeChar(0,29,137) ;
-        writeChar(0,27, Characters.Grave.getChrIndex()) ;
+        writeChar(0,27, Characters.Grave) ;
         tiVideo.displayAt(1,2, outl1);
         tiVideo.displayAt(2,2, outl2) ;
 
@@ -152,18 +159,18 @@ public class GameBoard {
         {
             // find a blank random location
             int grave1=  RandomBlank() ;
-            int grave2 = neighbor(((short)(randno()) >> 13) )+grave1 ;
+            int grave2= neighbor((short) random.nextInt(7))+grave1;
             if (areAllNeighborsBlank(grave1) && areAllNeighborsBlank(grave2))
             {
-                writeChar(grave1/ITIVideo.NumColums, grave1 % ITIVideo.NumColums, Characters.Grave.getChrIndex()) ;
-                writeChar(grave2/ITIVideo.NumColums, grave2 % ITIVideo.NumColums, Characters.Grave.getChrIndex()) ;
+                writeChar(grave1, Characters.Grave) ;
+                writeChar(grave2, Characters.Grave) ;
                 n++ ;
             }
         }
         //   put ship to screen in safe area
 
         currentShipLocation = INITSHIPLOC ;
-        tiVideo.wrChar(currentShipLocation/32, currentShipLocation%32, Ship) ;
+        writeChar(currentShipLocation,  Ship) ;
 
 
     }
@@ -190,6 +197,7 @@ public class GameBoard {
             val = val / 10 ;
         }
     }
+
     void displaySchooners(int numberSchooners){
         DisplayNumeric(numberSchooners, 23, 28);
     }
@@ -249,16 +257,20 @@ public class GameBoard {
 
     }
 
+    public int randomPlayAreaLocation(){
+        return random.nextInt(PLAYAREAEND-PLAYAREABG)+PLAYAREABG;
+    }
+
     int RandomBlank()
     {
-
-        short blank_loc ;
+        int tryCount = 0 ;
+        int blank_loc ;
         do
         {
-            blank_loc = (short) (randno());
-            blank_loc = (short)((blank_loc >> 7)+128) ;
+            blank_loc =  randomPlayAreaLocation() ;
+            tryCount++ ;
         } while (tiVideo.getChar(blank_loc) != ' ') ;
-
+        System.out.println("RandomBlank tryCount ="+tryCount);
         return(blank_loc) ;
     }
     private void initColors(){
@@ -327,6 +339,11 @@ public class GameBoard {
 
     }
 
+    private Random random ;
+
+    private void initRandom() {
+        random = ThreadLocalRandom.current();
+    }
     private static long rand16 = Math.abs((long) (Math.random() * 10000.0));
     short randno()
     {
