@@ -63,11 +63,20 @@ public class GameBoard {
         writeChar(row, col, c) ;
     }
 
-    public void writeChar(int position, int chr){
+    public void writeChar(int position, Characters chr){
+        writeChar(position, chr.getChrIndex());
+    }
+
+    private void writeChar(int position, int chr){
         writeChar(position / ITIVideo.NumColums, position % ITIVideo.NumColums, chr);
     }
+
     public void writeChar(int row, int col, int  chr){
         tiVideo.wrChar(row, col,  chr);
+    }
+
+    public void refresh(){
+        tiVideo.refresh();
     }
 
     public void preGameScreen()

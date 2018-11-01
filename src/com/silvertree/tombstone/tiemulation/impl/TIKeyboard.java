@@ -65,11 +65,21 @@ public class TIKeyboard implements ITIKeyboard {
             tiKeyCode = translateFunctionKey(keyCode);
         } else if (keyCode.isArrowKey()){
             tiKeyCode = translateArrowKey(keyCode);
-        } else if (keyCode.isDigitKey())
+        } else if (keyCode.isDigitKey()) {
             tiKeyCode = translateDigitKey(keyCode);
-
+        }else if (keyCode.isLetterKey()){
+            tiKeyCode = translateLetterKey(keyCode);
+        }
         System.out.println("translate("+keyCode.getName()+" to "+tiKeyCode.toString());
         return tiKeyCode;
+    }
+
+    private TIKeycode translateLetterKey(KeyCode keyCode) {
+        switch(keyCode){
+            case Q:
+                return TIKeycode.Q;
+        }
+        return TIKeycode.UNMAPPED;
     }
 
     private TIKeycode translateDigitKey(KeyCode keyCode) {

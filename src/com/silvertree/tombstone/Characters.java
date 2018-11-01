@@ -8,9 +8,13 @@ public enum Characters {
     ShipUp(105),
     ShipDown(106),
     ShipLeft(107),
+    BulletHorizontal(108),
+    BulletVertical(109),
     Large1(112),
     Large2(113),
-    SafeAreaBL(134)
+    SafeAreaBL(134),
+    Small1(144),
+    Small2(145)
 
     ;
 

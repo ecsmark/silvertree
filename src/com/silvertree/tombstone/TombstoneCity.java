@@ -4,6 +4,9 @@ import com.silvertree.tombstone.tiemulation.ITIKeyboard;
 import com.silvertree.tombstone.tiemulation.IVirtualTI;
 import com.silvertree.tombstone.tiemulation.TIEmulatorEvent;
 import com.silvertree.tombstone.tiemulation.TIKeyboardEventListener;
+import com.silvertree.tombstone.tiemulation.impl.TIKeyboard;
+import javafx.animation.AnimationTimer;
+import javafx.util.Duration;
 
 public class TombstoneCity {
 
@@ -29,6 +32,12 @@ public class TombstoneCity {
     IVirtualTI virtualTI ;
 
     static final int BONUS = 1000 ;
+
+    static final int SMALLMONTYPE = 0 ;
+    static final int LARGEMONTYPE =1;
+
+    static final ITIKeyboard.TIKeycode PANICKEY = TIKeyboard.TIKeycode.SPACE ;
+    static final TIKeyboard.TIKeycode FIREKEY = TIKeyboard.TIKeycode.Q ;
 
     public TombstoneCity(IVirtualTI pTI99) {
         virtualTI = pTI99;
@@ -88,6 +97,13 @@ public class TombstoneCity {
             case UP:
                 movshp(Characters.ShipUp, -32) ;
                 break;
+            case Q:
+                fire() ;
+                break;
+            case SPACE:
+                panic_key();
+                break;
+
 //            case 0:
 //            {
 //                int x ;
@@ -105,16 +121,16 @@ public class TombstoneCity {
 //                }
 //                else if (x < 0 )
 //                {
-//                    movshp(SHIPLT, -1);
+//                    movshp(Characters.ShipLeft, -1);
 //                    Msg("got an x < 0") ;
 //                }
 //                else if (y < 0)
 //                {
-//                    movshp(SHIPUP, -32);
+//                    movshp(Characters.ShipUp, -32);
 //                }
 //                else if (y > 0 )
 //                {
-//                    movshp(SHIPDN, 32);
+//                    movshp(Characters.ShipDown, 32);
 //                }
 //            }
         }
@@ -350,9 +366,9 @@ public class TombstoneCity {
     }
 
 
-    // ----------------------------------------------------------------------- 
-//  movshp() - move ship 
-// ----------------------------------------------------------------------- 
+    // -----------------------------------------------------------------------
+    //  movshp() - move ship
+    // -----------------------------------------------------------------------
     boolean movshp(Characters shipCharacter, int offset)
     {
         System.out.println("movshp("+shipCharacter+","+offset+")");
@@ -360,7 +376,7 @@ public class TombstoneCity {
 
         if (shipCharacter != Ship)	/* check to see if orientation changes	    */
         {
-            gameBoard.writeChar(m_nShiploc, shipCharacter.getChrIndex()) ;
+            gameBoard.writeChar(m_nShiploc, shipCharacter) ;
             Ship = shipCharacter ;
             offset = 0 ;
         }
@@ -373,7 +389,7 @@ public class TombstoneCity {
         int currentChr = gameBoard.getChar(newshiploc);
         if ((currentChr != ' ' && currentChr !=  Characters.SafeAreaBL.getChrIndex())|| currentChr ==  Ship.getChrIndex())
             return( false ) ;
-        gameBoard.writeChar(newshiploc, Ship.getChrIndex()) ;
+        gameBoard.writeChar(newshiploc, Ship) ;
         gameBoard.putBlank(m_nShiploc) ;
         m_nShiploc = newshiploc ;
         return( false ) ;
@@ -620,13 +636,13 @@ public class TombstoneCity {
 //                movshp(SHIPRT, 1);
 //                break;
 //            case TIKEYLEFT:
-//                movshp(SHIPLT, -1 ) ;
+//                movshp(Characters.ShipLeft, -1 ) ;
 //                break;
 //            case TIKEYDOWN:
-//                movshp(SHIPDN, 32) ;
+//                movshp(Characters.ShipDown, 32) ;
 //                break;
 //            case TIKEYUP:
-//                movshp(SHIPUP, -32) ;
+//                movshp(Characters.ShipUp, -32) ;
 //                break;
 //            case 0:
 //            {
@@ -645,16 +661,16 @@ public class TombstoneCity {
 //                }
 //                else if (x < 0 )
 //                {
-//                    movshp(SHIPLT, -1);
+//                    movshp(Characters.ShipLeft, -1);
 //                    Msg("got an x < 0") ;
 //                }
 //                else if (y < 0)
 //                {
-//                    movshp(SHIPUP, -32);
+//                    movshp(Characters.ShipUp, -32);
 //                }
 //                else if (y > 0 )
 //                {
-//                    movshp(SHIPDN, 32);
+//                    movshp(Characters.ShipDown, 32);
 //                }
 //            }
 //        }
@@ -679,10 +695,10 @@ public class TombstoneCity {
             Score += 9000 ;
             --Score10 ;
         }
-//        gameBoard.DisplayScore(Score) ;
-//        gameBoard.PutBlank(CGameBoard::Row(m_nShiploc), CGameBoard::Column(m_nShiploc)) ;
+        gameBoard.displayScore(Score) ;
+        gameBoard.putBlank(m_nShiploc) ;
         ++Schooners ;
-//        capture() ;
+        capture() ;
     }
 
     // -------------------------------------------------------------------------- 
@@ -692,55 +708,84 @@ public class TombstoneCity {
 // --------------------------------------------------------------------------  
     void fire()
     {
+        System.out.println("fire") ;
 
-//        BYTE    bullet ;
-//        int     bulletmoveicr ;
-//
-//        fireSound() ;      /* fire bullet sound    */
-//        if (Ship == SHIPRT)
-//        {
-//            bullet = BHORIZ ;
-//            bulletmoveicr = 1 ;
-//        }
-//        else if (Ship == SHIPUP)
-//        {
-//            bullet = BVERT ;
-//            bulletmoveicr = -32 ;
-//        }
-//        else if(Ship == SHIPDN)
-//        {
-//            bullet = BVERT ;
-//            bulletmoveicr = 32 ;
-//        }
-//        else if (Ship == SHIPLT)
-//        {
-//            bullet = BHORIZ ;
-//            bulletmoveicr = -1 ;
-//        }
-//
-//        int newloc = m_nShiploc ;
-//        int     c ;
-//        do
-//        {
-//
-//            newloc = newloc +bulletmoveicr ;
-//            c = gameBoard.GetChar(newloc) ;
-//            if (c == LARGE1 || c == LARGE2)
-//            { /* KILLAR   */
-//                killMonster(newloc, LARGEMONTYPE) ;
-//                /* Kil0 */
-//            }
-//            else if (c == SMALL1 || c == SMALL2)
-//                killMonster(newloc, SMALLMONTYPE) ;
-//
-//            else if (c == ' ' || c == SAFEAREABL)
-//            {  /* PUTBUL    */
-//                gameBoard.WriteChar(newloc, bullet) ;
-//                killtime(1000) ;
-//                gameBoard.PutBlank(newloc) ;
-//            }
-//        } while(c == ' ' || c == SAFEAREABL) ;
-//
+        Characters    bullet = Characters.BulletHorizontal;
+        int     bulletmoveicr =0;
+
+        fireSound() ;      /* fire bullet sound    */
+        if (Ship == Characters.ShipRight)
+        {
+            bullet = Characters.BulletHorizontal ;
+            bulletmoveicr = 1 ;
+        }
+        else if (Ship == Characters.ShipUp)
+        {
+            bullet = Characters.BulletVertical ;
+            bulletmoveicr = -32 ;
+        }
+        else if(Ship == Characters.ShipDown)
+        {
+            bullet = Characters.BulletVertical ;
+            bulletmoveicr = 32 ;
+        }
+        else if (Ship == Characters.ShipLeft)
+        {
+            bullet = Characters.BulletHorizontal ;
+            bulletmoveicr = -1 ;
+        }
+
+        class BulletAnimator extends AnimationTimer{
+
+            long lastTime =0L ;
+            int newloc = m_nShiploc ;
+            Characters bullet ;
+            final static long WaitInterval = 1000L*1000L*100L;
+
+            int bulletmoveicr ;
+            public BulletAnimator(Characters bullet, int bulletMoveIncr){
+                this.bulletmoveicr = bulletMoveIncr ;
+                this.bullet = bullet ;
+            }
+
+            @Override
+            public void handle(long currentNanoTime) {
+
+
+                if (lastTime !=0){
+                    if (currentNanoTime - lastTime < WaitInterval)
+                        return ;
+                    gameBoard.putBlank(newloc);
+                }
+
+                newloc = newloc +bulletmoveicr ;
+                int c = gameBoard.getChar(newloc) ;
+                if (c == Characters.Large1.getChrIndex() || c == Characters.Large2.getChrIndex())
+                { /* KILLAR   */
+                    killMonster(newloc, LARGEMONTYPE) ;
+                    /* Kil0 */
+                }
+                else if (c == Characters.Small1.getChrIndex() || c == Characters.Small2.getChrIndex())
+                    killMonster(newloc, SMALLMONTYPE) ;
+
+                else if (c == ' ' || c == Characters.SafeAreaBL.getChrIndex())
+                {  /* PUTBUL    */
+                    gameBoard.writeChar(newloc, bullet) ;
+                    gameBoard.refresh();
+                } else
+                {
+                    System.out.println("stopping bullet animator");
+                    gameBoard.refresh();
+                    stop() ;
+                }
+                lastTime = currentNanoTime ;
+
+            }
+        }
+
+        new BulletAnimator(bullet, bulletmoveicr).start() ;
+
+        System.out.println("-- fire() end --");
     }
 
 // --------------------------------------------------------------------------------
@@ -924,25 +969,25 @@ public class TombstoneCity {
 
     void capture()
     {
-//        if (Schooners == 0)
-//        {
-//            GameEnd() ;
-//        }
-//        else
-//        {
-//            --Schooners ;
-//            gameBoard.DisplaySchooners(Schooners) ;
-//            if (IsSafeAreaSurrounded())
-//            {
-//                arbshp() ;
-//            }
-//            else
-//            {
-//                m_nShiploc = INITSHIPLOC;
-//                gameBoard.WriteChar(m_nShiploc, Ship) ;
-//                keydep() ;
-//            }
-//        }
+        if (Schooners == 0)
+        {
+            gameEnd() ;
+        }
+        else
+        {
+            --Schooners ;
+            gameBoard.displaySchooners(Schooners) ;
+            if (IsSafeAreaSurrounded())
+            {
+                arbshp() ;
+            }
+            else
+            {
+                m_nShiploc = GameBoard.INITSHIPLOC;
+                gameBoard.writeChar(m_nShiploc, Ship) ;
+                keydep() ;
+            }
+        }
     }
 
 // --------------------------------------------------------------------------------
@@ -1059,6 +1104,7 @@ public class TombstoneCity {
 
     void killtime(int waitval)
     {
+
        // Sleep(waitval/500) ;
     }
 
