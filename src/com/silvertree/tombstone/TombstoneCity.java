@@ -977,7 +977,7 @@ public class TombstoneCity {
         {
             --Schooners ;
             gameBoard.displaySchooners(Schooners) ;
-            if (IsSafeAreaSurrounded())
+            if (isSafeAreaSurrounded())
             {
                 arbshp() ;
             }
@@ -1011,13 +1011,13 @@ public class TombstoneCity {
                 };
         boolean  surflag = false ;
 
-//        for(i=0; i<12; i++)
-//        {
-//            if (gameBoard.getChar(surm[i]) != GRAVE)
-//            {
-//                return(surflag) ;
-//            }
-//        }
+        for(i=0; i<12; i++)
+        {
+            if (gameBoard.getChar(surm[i]) != Characters.Grave.getChrIndex())
+            {
+                return(surflag) ;
+            }
+        }
         surflag = true ;
         return(surflag) ;
     }
