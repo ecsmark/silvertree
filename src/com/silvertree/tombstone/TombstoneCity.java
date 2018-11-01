@@ -8,6 +8,7 @@ import com.silvertree.tombstone.tiemulation.impl.TIKeyboard;
 import javafx.animation.AnimationTimer;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 public class TombstoneCity {
@@ -25,15 +26,17 @@ public class TombstoneCity {
     int   	Sprflg  ;
     Characters		Ship ;
     int     day = 0 ;
+
     List<Integer> SMontab ;
-    int		LMontab[] = new int [24] ;      /* Large monster table     */
-    int		LMontb[] ;       /* ptr to large monster table   */
+    List<Integer> LMontab;   /* Large monster table     */
     int		MouseFlag ;     /* mouse installed         */
 
     GameBoard gameBoard ;
     IVirtualTI virtualTI ;
 
     static final int BONUS = 1000 ;
+    static final int LPOINT	 =  150;
+    static final int SPOINT =   100;
 
     static final int SMALLMONTYPE = 0 ;
     static final int LARGEMONTYPE =1;
@@ -147,7 +150,7 @@ public class TombstoneCity {
         boolean bEndGame = false ;
         boolean bDoneWithDay = false ;
 
-        LMontb = LMontab ;
+        LMontab = new ArrayList<>(20);
         SMontab = new ArrayList<>(40);
         LMonct = 0 ;
         gameBoard.preGameScreen() ;
@@ -743,7 +746,7 @@ public class TombstoneCity {
             long lastTime =0L ;
             int newloc = m_nShiploc ;
             Characters bullet ;
-            final static long WaitInterval = 1000L*1000L*100L;
+            final static long WaitInterval = 1000L*1000L*10L;
 
             int bulletmoveicr ;
             public BulletAnimator(Characters bullet, int bulletMoveIncr){
@@ -766,11 +769,13 @@ public class TombstoneCity {
                 if (c == Characters.Large1.getChrIndex() || c == Characters.Large2.getChrIndex())
                 { /* KILLAR   */
                     killMonster(newloc, LARGEMONTYPE) ;
+                    stop() ;
                     /* Kil0 */
                 }
-                else if (c == Characters.Small1.getChrIndex() || c == Characters.Small2.getChrIndex())
-                    killMonster(newloc, SMALLMONTYPE) ;
-
+                else if (c == Characters.Small1.getChrIndex() || c == Characters.Small2.getChrIndex()) {
+                    killMonster(newloc, SMALLMONTYPE);
+                    stop() ;
+                }
                 else if (c == ' ' || c == Characters.SafeAreaBlank.getChrIndex())
                 {  /* PUTBUL    */
                     gameBoard.writeChar(newloc, bullet) ;
@@ -806,66 +811,78 @@ public class TombstoneCity {
 
     void killMonster(int screenloc, int montype)
     {
+        System.out.println("killMonster");
 
-//        int     *montab ;       /* monster table for monster type  */
-//        int     *toptab ;       /* top of monster table      */
-//        int     *newtab ;
-//
-//        /*   generate explosion - graphic and sound       */
-//        gameBoard.WriteChar(screenloc, EXPLOD) ;
+        List<Integer> montab = SMontab ;
+        /*   generate explosion - graphic and sound       */
 //        bigsnd() ;
 //        killtime(24000) ;
-//
-//        if (montype == LARGEMONTYPE)
-//        {   /* for large monsters display grave  (KIL1A)    */
-//            gameBoard.WriteChar(screenloc, GRAVE) ;
-//            montab = LMontab ;
-//            toptab = LMontb ;
-//        }
-//        else
-//        {   /* for small monsters put blank        */
-//            gameBoard.PutBlank(screenloc) ;
-//            montab = SMontab ;
-//            toptab = SMontb ;
-//        }
-//
-//        while (*montab++ != screenloc) ;   /* search for deceased monster  */
-//        newtab = montab-1 ;           /* deceased monster table loc   */
-//        while(montab !=  toptab)
-//		*newtab++ = *montab++ ;
-//
-//        if (montype == SMALLMONTYPE)
-//        {
-//            --SMontb ;
-//            --SMonct ;
-//            Score+= SPOINT;
-//        }
-//        else
-//        {
-//            --LMontb ;
-//            --LMonct ;
-//            Score+= LPOINT ;
-//        }
-//
-//        gameBoard.DisplayScore(Score) ;
-//
-//        if (montype == LARGEMONTYPE)
-//        {
-//            CheckForAdjacentGraves(screenloc) ;
-//        }
-//        /* ---------------------------------------------------------------- */
-//        /*     See  if ship is inside safe area  and surrounded    */
-//        /* ---------------------------------------------------------------- */
-//
-//        if (isShipInSafeArea() && isSafeAreaSurrounded())
-//        {
-//            if (Schooners == 0)
-//                gameEnd() ;
-//            gameBoard.PutBlank(m_nShiploc) ;   /* blank out ship character */
-//            --Schooners;
-//            gameBoard.displaySchooners(Schooners) ;
-//            arbshp() ;
-//        }
+
+        Characters replacementChar = Characters.Blank ;
+        if (montype == LARGEMONTYPE)
+        {   /* for large monsters display grave  (KIL1A)    */
+            gameBoard.writeChar(screenloc, Characters.Grave) ;
+            montab = LMontab ;
+        }
+        else
+        {   /* for small monsters put blank        */
+            gameBoard.putBlank(screenloc) ;
+            montab = SMontab ;
+        }
+
+        new AnimationTimer(){
+
+            long last = 0 ;
+
+            @Override
+            public void handle(long now) {
+                if (last == 0) {
+                    last = now;
+                    gameBoard.writeChar(screenloc, Characters.Explode) ;
+                    gameBoard.refresh();
+
+                }
+                else if (now - last > 1000L*1000L*240){
+                    gameBoard.writeChar(screenloc, replacementChar);
+                    gameBoard.refresh();
+                    stop();
+                }
+            }
+        }.start() ;
+
+        Iterator<Integer> monsterTabIter = montab.iterator();
+        while(monsterTabIter.hasNext()){
+            if (monsterTabIter.next() == screenloc){
+                if (montype == SMALLMONTYPE){
+                    SMonct-- ;
+                    Score += SPOINT ;
+                }
+                else{
+                    LMonct-- ;
+                    Score += LPOINT ;
+                }
+                monsterTabIter.remove();
+            }
+        }
+        gameBoard.displayScore(Score) ;
+
+        if (montype == LARGEMONTYPE)
+        {
+            checkForAdjacentGraves(screenloc, false) ;
+        }
+        /* ---------------------------------------------------------------- */
+        /*     See  if ship is inside safe area  and surrounded    */
+        /* ---------------------------------------------------------------- */
+
+        if (isShipInSafeArea() && gameBoard.isSafeAreaSurrounded())
+        {
+            if (Schooners == 0)
+                gameEnd() ;
+            gameBoard.putBlank(m_nShiploc) ;   /* blank out ship character */
+            --Schooners;
+            gameBoard.displaySchooners(Schooners) ;
+            arbshp() ;
+        }
     }
 
 // --------------------------------------------------------------------------------
@@ -980,7 +997,7 @@ public class TombstoneCity {
         {
             --Schooners ;
             gameBoard.displaySchooners(Schooners) ;
-            if (isSafeAreaSurrounded())
+            if (gameBoard.isSafeAreaSurrounded())
             {
                 arbshp() ;
             }
@@ -993,33 +1010,9 @@ public class TombstoneCity {
         }
     }
 
-// --------------------------------------------------------------------------------
-//
-// IsSafeAreaSurrounded
-//
-//  Description:	Check to see if all exits from safe area blocked.
-//
-//  Parameters:		None.
-//
-//  Returns:		true - surrounded
-//
-// --------------------------------------------------------------------------------
 
-    boolean isSafeAreaSurrounded()
-    {
-        final int surm[] =
-                {237, 239, 241, 307, 371, 435,
-                        497, 495, 493, 427, 363, 299
-                };
-
-        for(int position : surm)
-        {
-            if (gameBoard.getChar(position) != Characters.Grave.getChrIndex())
-            {
-                return(false) ;
-            }
-        }
-        return(true) ;
+    boolean isShipInSafeArea(){
+        return gameBoard.isInSafeArea(m_nShiploc);
     }
 
 // --------------------------------------------------------------------------------
@@ -1058,26 +1051,7 @@ public class TombstoneCity {
 //        keydep() ;
     }
 
-// --------------------------------------------------------------------------------
-//
-// IsShipInSafeArea
-//
-//  Description:	subroutine to see if ship is in safe area.
-//
-//  Parameters:		none.
-//
-//  Returns:		none.
-//
-// --------------------------------------------------------------------------------
 
-    boolean isShipInSafeArea()
-    {
-//        int row = CGameBoard::Row(m_nShiploc) ;
-//        int col = CGameBoard::Column(m_nShiploc) ;
-//
-//        return (row >= 8 &&  row <= 14 && col >= 12 && col <= 18) ? true : false ;
-        throw new java.lang.UnsupportedOperationException();
-    }
 
 
 

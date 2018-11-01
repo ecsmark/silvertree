@@ -213,6 +213,35 @@ public class GameBoard {
             tiVideo.displayAt(10,10, "YOUR CHOICE?") ;
             tiVideo.displayAt(14,5, "PRESS AID FOR RULES") ;
     }
+
+
+    public boolean isInSafeArea(int position)
+    {
+        int row = position/ 32;
+        int col = position % 32 ;
+
+        return (row >= 8 &&  row <= 14 && col >= 12 && col <= 18) ? true : false ;
+
+    }
+
+    public boolean isSafeAreaSurrounded()
+    {
+        final int surm[] =
+                {237, 239, 241, 307, 371, 435,
+                        497, 495, 493, 427, 363, 299
+                };
+
+        for(int position : surm)
+        {
+            if (getChar(position) != Characters.Grave.getChrIndex())
+            {
+                return(false) ;
+            }
+        }
+        return(true) ;
+    }
+
+
     public void displayHelpMenu(){
         final String szRule1 ="MOVE SCHOONER\u0082 ARROW KEYS" ;
         final String szRule2 ="FIRE MISSILE \u0082Q/Y/INSERT" ;

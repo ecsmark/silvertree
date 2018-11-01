@@ -1,6 +1,7 @@
 package com.silvertree.tombstone;
 
 public enum Characters {
+    Blank(32),
     Grave(93),
     BottomEdge(95),
     Explode(97),
