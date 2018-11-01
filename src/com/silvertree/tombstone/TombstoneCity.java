@@ -6,7 +6,6 @@ import com.silvertree.tombstone.tiemulation.TIEmulatorEvent;
 import com.silvertree.tombstone.tiemulation.TIKeyboardEventListener;
 import com.silvertree.tombstone.tiemulation.impl.TIKeyboard;
 import javafx.animation.AnimationTimer;
-import javafx.util.Duration;
 
 public class TombstoneCity {
 
@@ -387,7 +386,7 @@ public class TombstoneCity {
         }
         newshiploc = offset + m_nShiploc ;
         int currentChr = gameBoard.getChar(newshiploc);
-        if ((currentChr != ' ' && currentChr !=  Characters.SafeAreaBL.getChrIndex())|| currentChr ==  Ship.getChrIndex())
+        if ((currentChr != ' ' && currentChr !=  Characters.SafeAreaBlank.getChrIndex())|| currentChr ==  Ship.getChrIndex())
             return( false ) ;
         gameBoard.writeChar(newshiploc, Ship) ;
         gameBoard.putBlank(m_nShiploc) ;
@@ -768,7 +767,7 @@ public class TombstoneCity {
                 else if (c == Characters.Small1.getChrIndex() || c == Characters.Small2.getChrIndex())
                     killMonster(newloc, SMALLMONTYPE) ;
 
-                else if (c == ' ' || c == Characters.SafeAreaBL.getChrIndex())
+                else if (c == ' ' || c == Characters.SafeAreaBlank.getChrIndex())
                 {  /* PUTBUL    */
                     gameBoard.writeChar(newloc, bullet) ;
                     gameBoard.refresh();
@@ -1004,22 +1003,19 @@ public class TombstoneCity {
 
     boolean isSafeAreaSurrounded()
     {
-        int  i ;
         final int surm[] =
                 {237, 239, 241, 307, 371, 435,
                         497, 495, 493, 427, 363, 299
                 };
-        boolean  surflag = false ;
 
-        for(i=0; i<12; i++)
+        for(int position : surm)
         {
-            if (gameBoard.getChar(surm[i]) != Characters.Grave.getChrIndex())
+            if (gameBoard.getChar(position) != Characters.Grave.getChrIndex())
             {
-                return(surflag) ;
+                return(false) ;
             }
         }
-        surflag = true ;
-        return(surflag) ;
+        return(true) ;
     }
 
 // --------------------------------------------------------------------------------
@@ -1039,22 +1035,22 @@ public class TombstoneCity {
         int     screen_loc ;
         boolean     found = false;
 
-//        while (!found)
-//        {
-//            while ((screen_loc = gameBoard.GetChar(((randno() >> 7)+128))) != ' ') ;
-//            m_nShiploc = screen_loc ;
+        while (!found)
+        {
+            while ((screen_loc = gameBoard.getChar(((randno() >> 7)+128))) != ' ') ;
+            m_nShiploc = screen_loc ;
+
+            for (int i=0; i<8; i++)
+            {
+                if (gameBoard.getChar(screen_loc+gameBoard.neighbor(i)) == ' ')
+                {
+                    found = true  ;
+                    break ;
+                }
+            }
+        }
 //
-//            for (int i=0; i<8; i++)
-//            {
-//                if (gameBoard.GetChar(screen_loc+gameBoard.Neighbor(i)) == ' ')
-//                {
-//                    found = true  ;
-//                    break ;
-//                }
-//            }
-//        }
-//
-//        gameBoard.WriteChar(m_nShiploc, Ship) ;
+        gameBoard.writeChar(m_nShiploc, Ship) ;
 //        keydep() ;
     }
 

@@ -12,9 +12,10 @@ public enum Characters {
     BulletVertical(109),
     Large1(112),
     Large2(113),
-    SafeAreaBL(134),
+    SafeAreaBlank(134),
     Small1(144),
-    Small2(145)
+    Small2(145),
+    SafeAreaColumn(152)
 
     ;
 

@@ -1,5 +1,7 @@
 package com.silvertree.tombstone.tiemulation;
 
+import com.silvertree.tombstone.Characters;
+
 public interface ITIVideo {
     void refresh() ;
     boolean vmbw(TIAddress addr, char bytes[], short count);
