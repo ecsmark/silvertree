@@ -2,7 +2,6 @@ package com.silvertree.tombstone;
 
 import com.silvertree.tombstone.tiemulation.*;
 import com.silvertree.tombstone.tiemulation.impl.TIKeyboard;
-import com.silvertree.tombstone.tiemulation.impl.TIVideo;
 import javafx.animation.Animation;
 import javafx.animation.AnimationTimer;
 import javafx.animation.KeyFrame;
@@ -386,8 +385,8 @@ public class TombstoneCity {
         }
         newshiploc = offset + m_nShiploc ;
 
-        int currentChr = gameBoard.getChar(newshiploc);
-        if ((currentChr !=Characters.Blank.getChrIndex() && currentChr !=  Characters.SafeAreaBlank.getChrIndex())|| currentChr ==  Ship.getChrIndex())
+        Characters currentChr = gameBoard.getCharacter(newshiploc);
+        if ((currentChr !=Characters.Blank && currentChr !=  Characters.SafeAreaBlank)|| currentChr ==  Ship)
             return( false ) ;
         gameBoard.writeChar(newshiploc, Ship) ;
         gameBoard.putBlank(m_nShiploc) ;
@@ -427,8 +426,8 @@ public class TombstoneCity {
                     else
                         ++newmonloc ;
 
-                    int c = gameBoard.getChar(newmonloc);
-                    if (c == Characters.Blank.getChrIndex())
+                    Characters c = gameBoard.getCharacter(newmonloc);
+                    if (c == Characters.Blank)
                     {
                         monblk(monsterPosition, newmonloc) ;
 					    SMontab.set(i, newmonloc );
@@ -535,15 +534,15 @@ public class TombstoneCity {
     boolean tryMove ( ArrayList<Integer> montab, int index, int newmonloc)
     {
         boolean moveFound = false ;
-        int c = gameBoard.getChar(newmonloc);
-        if (c == Characters.Blank.getChrIndex())
+        Characters c = gameBoard.getCharacter(newmonloc);
+        if (c == Characters.Blank)
         {
             monblk(montab.get(index), newmonloc) ;
 		    montab.set(index, newmonloc) ;
             moveFound =  true  ;
 
         }
-        else if (c == Ship.getChrIndex())
+        else if (c == Ship)
         {
             moveFound = captureShip(montab, index, newmonloc) ;
         }
@@ -552,15 +551,15 @@ public class TombstoneCity {
 
     void monblk(int curloc, int newloc)
     {
-        int monchar = gameBoard.getChar(curloc) ;
+        Characters monchar = gameBoard.getCharacter(curloc) ;
 
         Characters newChar = Characters.Small1;
 
-        if (monchar == Characters.Large1.getChrIndex())
+        if (monchar == Characters.Large1)
             newChar = Characters.Large2 ;
-        else if (monchar == Characters.Large2.getChrIndex())
+        else if (monchar == Characters.Large2)
             newChar = Characters.Large1 ;
-        else if (monchar == Characters.Small1.getChrIndex())
+        else if (monchar == Characters.Small1)
             newChar = Characters.Small2 ;
 
         gameBoard.writeChar(newloc, newChar) ;
@@ -765,18 +764,18 @@ public class TombstoneCity {
                 }
 
                 newloc = newloc +bulletmoveicr ;
-                int c = gameBoard.getChar(newloc) ;
-                if (c == Characters.Large1.getChrIndex() || c == Characters.Large2.getChrIndex())
+                Characters c = gameBoard.getCharacter(newloc) ;
+                if (c == Characters.Large1 || c == Characters.Large2)
                 { /* KILLAR   */
                     killMonster(newloc, LARGEMONTYPE) ;
                     stop() ;
                     /* Kil0 */
                 }
-                else if (c == Characters.Small1.getChrIndex() || c == Characters.Small2.getChrIndex()) {
+                else if (c == Characters.Small1 || c == Characters.Small2) {
                     killMonster(newloc, SMALLMONTYPE);
                     stop() ;
                 }
-                else if (c ==  Characters.Blank.getChrIndex() || c == Characters.SafeAreaBlank.getChrIndex())
+                else if (c ==  Characters.Blank || c == Characters.SafeAreaBlank)
                 {  /* PUTBUL    */
                     gameBoard.writeChar(newloc, bullet) ;
                 } else
@@ -888,7 +887,7 @@ public class TombstoneCity {
         adjgraves[adjcount++] = grave ;
         for (int i=0; i<8; i++)
         {
-            if (gameBoard.getChar(gameBoard.neighbor(i)+grave) == Characters.Grave.getChrIndex())
+            if (gameBoard.getCharacter(gameBoard.neighbor(i)+grave) == Characters.Grave)
             {
                 adjgraves[adjcount++] = gameBoard.neighbor(i)+grave ;
                 if (adjcount == 3)
@@ -916,7 +915,7 @@ public class TombstoneCity {
             // ----------------------------------------------------------------
             //   See if sprite and grave loc still coincide
             // ----------------------------------------------------------------
-            if (gameBoard.getChar(Sprloc)  != Characters.Grave.getChrIndex())
+            if (gameBoard.getCharacter(Sprloc)  != Characters.Grave)
             { /* if location of sprite no longer contains a saguaro */
                 //gameBoard.Video()->Locate(0, (CGameBoard::MaxRow()+1)*8, 0) ;     /* turn off sprite      */
             }
@@ -1004,12 +1003,13 @@ public class TombstoneCity {
 
         while (!found)
         {
-            while ((screen_loc = gameBoard.getChar(((randno() >> 7)+128))) !=  Characters.Blank.getChrIndex()) ;
+            screen_loc = ((randno() >> 7)+128);
+            while (gameBoard.getCharacter(screen_loc) !=  Characters.Blank) ;
             m_nShiploc = screen_loc ;
 
             for (int i=0; i<8; i++)
             {
-                if (gameBoard.getChar(screen_loc+gameBoard.neighbor(i)) == Characters.Blank.getChrIndex())
+                if (gameBoard.getCharacter(screen_loc+gameBoard.neighbor(i)) == Characters.Blank)
                 {
                     found = true  ;
                     break ;

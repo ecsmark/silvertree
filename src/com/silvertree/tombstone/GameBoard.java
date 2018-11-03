@@ -62,7 +62,7 @@ public class GameBoard {
      * @param position - screen relative character position
      * @return character at position
      */
-    public int getChar(int position){
+    private int getChar(int position){
         byte byteValue = tiVideo.getChar(position);
         return ((int)byteValue)   & 0x00ff  ;
     }
