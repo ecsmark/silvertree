@@ -225,6 +225,10 @@ public class GameBoard {
     public void safeAreaBlueOnBlue(){
         tiVideo.setColor(19,(byte) 0x44);
     }
+    public void safeAreaBlueOnLightBlue()
+    {
+        tiVideo.setColor(19, (byte)0x47) ;
+    }
 
     public void displayLevelMenu(){
         tiVideo.displayAt(6,8,"LEVEL 1 = NOVICE") ;

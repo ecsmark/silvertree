@@ -1,10 +1,8 @@
 package com.silvertree.tombstone;
 
-import com.silvertree.tombstone.tiemulation.ITIKeyboard;
-import com.silvertree.tombstone.tiemulation.IVirtualTI;
-import com.silvertree.tombstone.tiemulation.TIEmulatorEvent;
-import com.silvertree.tombstone.tiemulation.TIKeyboardEventListener;
+import com.silvertree.tombstone.tiemulation.*;
 import com.silvertree.tombstone.tiemulation.impl.TIKeyboard;
+import com.silvertree.tombstone.tiemulation.impl.TIVideo;
 import javafx.animation.Animation;
 import javafx.animation.AnimationTimer;
 import javafx.animation.KeyFrame;
@@ -21,12 +19,11 @@ public class TombstoneCity {
 
     int   	m_nLevFlg  ;
     int   	m_nSpeed  ;
-    int   	LMonct  ;		/* Large Monster count     */
     int   	Score10  ;  	/* Score (10,000)          */
     int   	Score ;       	/* Score - digits 0-9999      */
     int   	Schooners  ;
     int   	m_nShiploc ;	/* current ship location      */
-    int   	m_nGencur  ;	/* current Generator location   */
+    int   	m_nGencur =GameBoard.PLAYAREABG  ;	/* current Generator location   */
     int   	Sprloc  ;
     int   	Sprflg  ;
     Characters		Ship ;
@@ -56,13 +53,12 @@ public class TombstoneCity {
     public TombstoneCity(IVirtualTI pTI99) {
         virtualTI = pTI99;
 
-        LMonct = 0;      // Large Monster count
         Score10 = 0;      // Score (10,000)
         Score = 0;       // Score - digits 0-9999
         Schooners = 0;
         Ship = Characters.ShipRight;            // current ship character
         m_nShiploc = GameBoard.INITSHIPLOC;     // current ship location
-        m_nGencur = 0;      // current Generator location
+        m_nGencur = GameBoard.PLAYAREABG;      // current Generator location
         Sprloc = 0;
         Sprflg = 0;
 
@@ -149,9 +145,8 @@ public class TombstoneCity {
         boolean bEndGame = false ;
         boolean bDoneWithDay = false ;
 
-        LMontab = new ArrayList<>(20);
-        SMontab = new ArrayList<>(40);
-        LMonct = 0 ;
+        LMontab = new ArrayList<>(MAXLARGEMONSTERCOUNT);
+        SMontab = new ArrayList<>(MAXSMALLMONSTERCOUNT);
         gameBoard.preGameScreen() ;
         gameBoard.displayDay(day);
         Score += BONUS ;
@@ -180,9 +175,12 @@ public class TombstoneCity {
         day = 0;
         playDay(++day);
         createGameloop() ;
+
     }
 
+    int loopCount = 0 ;
     private void doGameLoop(){
+
         moveSmallMonsters();
         moveLargeMonsters();
     }
@@ -192,9 +190,17 @@ public class TombstoneCity {
 
             @Override
             public void handle(javafx.event.ActionEvent event) {
+
                 doGameLoop() ;
             }
         }));
+        KeyFrame genLargeMonstersFrame = new KeyFrame(Duration.seconds(4), new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent event) {
+                generateLargeMonsters();
+            }
+        });
+        gameLoop.getKeyFrames().add(genLargeMonstersFrame);
         gameLoop.setCycleCount(Animation.INDEFINITE);
         gameLoop.play() ;
 
@@ -204,8 +210,8 @@ public class TombstoneCity {
     {
 
 //        createSprite() ;
-//        gameBoard.Video()->DisplayAt(11,4, "PRESS REDO OR BACK") ;
-//        //gameBoard.Video()->refresh() ;
+        virtualTI.getVideo().displayAt(11,4, "PRESS REDO OR BACK") ;
+        gameLoop.stop();
 //        while(m_pTI99->getKey() != TIKEYREDO) ;
     }
 
@@ -233,7 +239,7 @@ public class TombstoneCity {
             do
             {
                 screen_loc = gameBoard.randomPlayAreaLocation() ;
-            } while (gameBoard.getChar(screen_loc) !=  Characters.Blank.getChrIndex()) ;
+            } while (gameBoard.getCharacter(screen_loc) !=  Characters.Blank) ;
 
             int r  = randno() ;
             if (r > (r &0xff))
@@ -247,85 +253,85 @@ public class TombstoneCity {
    }
 
 
-//  ----------------------------------------------------------------------- 
-//   GenerateLargeMonsters() - subroutine to check for generators and add monster to   
-//         monster table. 
-//
-//   Returns:   TRUE : generator found
-//     			FALSE: no generator found
-// 
-//      Genlas - Last location checked on last entry.
-//      m_nGencur - current screen location being checked.  
-//      Genrel -  screen location to relase new monster. 
-//
-// 	Original Name:  genrat
-//  -----------------------------------------------------------------------  
+    /**
+     *  last location checked
+     */
+    private int     Genlas ;
+    /**
+     * screen location to release new monster
+     */
+    private int     Genrel ;
 
-
+    /**
+     *  check for generators and add monster to monster table.
+     * @return  true - generator found
+     */
     boolean generateLargeMonsters()
     {
-//        static  int     Genlas ;
-//        static  int     Genrel ;
-//
-//
+        System.out.println("genarateLargeMonsters");
+
         boolean	generatorFound = false ;  	/*  flag set if generator encountered.  */
-//        boolean	releasePointFound = false ; /*  flag set if able to release monster */
-//
-//        gameBoard.SafeAreaBlueOnLightBlue() ;     /* safe area blue on light blue */
-//        Genlas = m_nGencur ;
-//        int save = m_nGencur ;
-//
-//
-//        while (++m_nGencur != Genlas && !(generatorFound && releasePointFound))
-//        {
-//            if (m_nGencur >= PLAYAREAEND)
-//            {
-//                m_nGencur = PLAYAREABEG ;
-//                ++Genlas ;
-//                if (Genlas > PLAYAREAEND)
-//                    Genlas = PLAYAREAEND ;
-//            }
-//
-//            int  c  = gameBoard.GetChar(m_nGencur) ;
-//            if (c == GRAVE)
-//            {
-//                /* ------------------------------------------------------------ */
-//                /* found a Saguaro -> if another one adjacent then we have      */
-//                /* a generator               									*/
-//                /* ------------------------------------------------------------ */
-//                for (int i=0 ; i< 8; i++)
-//                {
-//                    c = gameBoard.GetChar(m_nGencur+gameBoard.Neighbor(i)) ;
-//                    if (c == GRAVE)
-//                        generatorFound = true ;    /* found a generator         */
-//                    else if (c == ' ')
-//                    {       /* found Monster release position   */
-//                        releasePointFound = true  ;
-//                        Genrel = m_nGencur+gameBoard.Neighbor(i) ;
-//                    }
-//
-//                }
-//
-//                /*   Did we find a generator yet ?              */
-//                if (generatorFound && releasePointFound)
-//                {
-//                    /* put up sprite at generator     */
-//                    Sprloc = m_nGencur ;
-//                    gameBoard.Video()->Locate(0, CGameBoard::Row(m_nGencur)*8,CGameBoard::Column(m_nGencur)*8) ;
-//
-//                    if (Sprflg != 1)
-//                    { /* release Large monster    */
-//                        ReleaseMonster(Genrel) ;
-//                    }
-//                    else
-//                    {
-//                        Sprflg = 0 ;  /* reset sprite flag */
-//                        m_nGencur = save ;
-//                    }
-//                    break ;
-//                }
-//            }
-//        }
+        boolean	releasePointFound = false ; /*  flag set if able to release monster */
+
+        gameBoard.safeAreaBlueOnLightBlue() ;     /* safe area blue on light blue */
+        Genlas = m_nGencur ;
+        int save = m_nGencur ;
+
+
+        while (++m_nGencur != Genlas && !(generatorFound && releasePointFound))
+        {
+            if (m_nGencur >= GameBoard.PLAYAREAEND)
+            {
+                m_nGencur = GameBoard.PLAYAREABG ;
+                ++Genlas ;
+                if (Genlas >  GameBoard.PLAYAREAEND)
+                    Genlas = GameBoard.PLAYAREAEND ;
+            }
+
+            Characters  c  = gameBoard.getCharacter(m_nGencur) ;
+            if (c == Characters.Grave)
+            {
+                /* ------------------------------------------------------------ */
+                /* found a Saguaro -> if another one adjacent then we have      */
+                /* a generator               									*/
+                /* ------------------------------------------------------------ */
+                for (int i=0 ; i< 8; i++)
+                {
+                    c = gameBoard.getCharacter(m_nGencur+gameBoard.neighbor(i)) ;
+                    if (c == Characters.Grave)
+                        generatorFound = true ;    /* found a generator         */
+                    else if (c == Characters.Blank)
+                    {       /* found Monster release position   */
+                        releasePointFound = true  ;
+                        Genrel = m_nGencur+gameBoard.neighbor(i) ;
+                    }
+
+                }
+
+                /*   Did we find a generator yet ?              */
+                if (generatorFound && releasePointFound)
+                {
+                    /* put up sprite at generator     */
+                    Sprloc = m_nGencur ;
+                    int y = (m_nGencur / GameBoard.NUMBERCOLUMNS) * 8 ;
+                    int x = (m_nGencur % GameBoard.NUMBERCOLUMNS) * 8 ;
+
+                    virtualTI.getVideo().locateSprite(0, y, x);
+                    //gameBoard.Video()->Locate(0, CGameBoard::Row(m_nGencur)*8,CGameBoard::Column(m_nGencur)*8) ;
+
+                    if (Sprflg != 1)
+                    { /* release Large monster    */
+                        releaseMonster(Genrel) ;
+                    }
+                    else
+                    {
+                        Sprflg = 0 ;  /* reset sprite flag */
+                        m_nGencur = save ;
+                    }
+                    break ;
+                }
+            }
+        }
         return(generatorFound) ;
     }
 
@@ -333,18 +339,20 @@ public class TombstoneCity {
     {
 
         // put up sprite at generator 
-//        Sprloc = m_nGencur ;
-//        gameBoard.Video()->Locate(0, CGameBoard::Row(m_nGencur)*8,CGameBoard::Column(m_nGencur)*8) ;
-//
-//        // release Large monster
-//        if (LMonct < MAXMNL)
-//        {
-//            gameBoard.WriteChar(loc, LARGE2) ;
-//            ++m_nGencur ;
-//            ++LMonct ;
-//		*LMontb++ = loc ;
-//        }
-//        gameBoard.SafeAreaBlueOnBlue() ;
+        Sprloc = m_nGencur ;
+        int y = (m_nGencur / GameBoard.NUMBERCOLUMNS)*8;
+        int x =  (m_nGencur % GameBoard.NUMBERCOLUMNS)*8;
+
+        virtualTI.getVideo().locateSprite(0, y, x) ;
+
+        // release Large monster
+        if (LMontab.size() < MAXLARGEMONSTERCOUNT)
+        {
+            gameBoard.writeChar(loc, Characters.Large2) ;
+            ++m_nGencur ;
+            LMontab.add(loc);
+        }
+        gameBoard.safeAreaBlueOnBlue() ;
     }
 
 
@@ -372,7 +380,7 @@ public class TombstoneCity {
             offset = 0 ;
         }
 
-        if (LMonct == 0)
+        if (LMontab.size() == 0)
         {
             /* kill time of same depressed	    */
         }
@@ -838,7 +846,6 @@ public class TombstoneCity {
                     Score += SPOINT ;
                 }
                 else{
-                    LMonct-- ;
                     Score += LPOINT ;
                 }
                 monsterTabIter.remove();
@@ -900,7 +907,6 @@ public class TombstoneCity {
             {
                 gameBoard.writeChar(adjgraves[n], Characters.Large1) ;
 			    LMontab.add(adjgraves[n++] );
-                ++LMonct ;
             }
 
             while ( m_nLevFlg < 3) /* blank out graves for levels 1 or 2  */

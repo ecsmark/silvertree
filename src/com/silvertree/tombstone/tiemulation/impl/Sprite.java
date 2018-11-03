@@ -78,4 +78,9 @@ public class Sprite {
         if (y >= TIVideo.PIXELROWS)
             y = 0 ;
     }
+
+    public void locate(int x, int y) {
+        this.x = x ;
+        this.y = y ;
+    }
 }

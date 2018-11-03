@@ -198,6 +198,14 @@ public class TIVideo implements ITIVideo {
         sprites[spritenum] =  sprite;
     }
 
+    @Override
+    public void locateSprite(int spriteNum, int y, int x) {
+        Sprite sprite = sprites[spriteNum];
+        if (sprite != null){
+            sprite.locate(x, y);
+        }
+    }
+
     private void displaySprite(SPAB spriteAttr, boolean b) {
     }
 
