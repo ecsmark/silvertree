@@ -15,7 +15,6 @@ public class TombstoneCity {
 
     int   	m_nLevFlg  ;
     int   	m_nSpeed  ;
-    int   	SMonct  ;		/* Small Monster count     */
     int   	LMonct  ;		/* Large Monster count     */
     int   	Score10  ;  	/* Score (10,000)          */
     int   	Score ;       	/* Score - digits 0-9999      */
@@ -27,7 +26,7 @@ public class TombstoneCity {
     Characters		Ship ;
     int     day = 0 ;
 
-    List<Integer> SMontab ;
+    ArrayList<Integer> SMontab ;
     List<Integer> LMontab;   /* Large monster table     */
     int		MouseFlag ;     /* mouse installed         */
 
@@ -38,6 +37,9 @@ public class TombstoneCity {
     static final int LPOINT	 =  150;
     static final int SPOINT =   100;
 
+    static final int MAXLARGEMONSTERCOUNT = 9;
+    static final int MAXSMALLMONSTERCOUNT = 20 ;
+
     static final int SMALLMONTYPE = 0 ;
     static final int LARGEMONTYPE =1;
 
@@ -47,13 +49,11 @@ public class TombstoneCity {
     public TombstoneCity(IVirtualTI pTI99) {
         virtualTI = pTI99;
 
-        SMonct = 0;      // Small Monster count
         LMonct = 0;      // Large Monster count
         Score10 = 0;      // Score (10,000)
         Score = 0;       // Score - digits 0-9999
         Schooners = 0;
-        Ship = Characters.ShipRight;
-        ;   // current ship character
+        Ship = Characters.ShipRight;            // current ship character
         m_nShiploc = GameBoard.INITSHIPLOC;     // current ship location
         m_nGencur = 0;      // current Generator location
         Sprloc = 0;
@@ -79,17 +79,6 @@ public class TombstoneCity {
     private void handleGamePlayKeys(ITIKeyboard.TIKeyboardEvent event) {
         System.out.println("handleGamePlayKeys "+event.getKeyCode());
         switch(event.getKeyCode()){
-//            case FIREKEY1:
-//            case FIREKEY2:
-//            case FIREKEY3:
-//                c = FIREKEY ;
-//                fire();
-//                break;
-//
-//            case PANICKEY:
-//                panic_key() ;
-//                break;
-//
             case RIGHT:
                 movshp(Characters.ShipRight, 1);
                 break;
@@ -145,8 +134,8 @@ public class TombstoneCity {
 
     public boolean playDay(int day)
     {
+        System.out.println("playDay");
 
-        final byte     sprite[] ={(byte) 0xf7, (byte)0xd5, (byte) 0xc5, (byte) 0xf1, (byte) 0xf7, (byte) 0xf7, (byte) 0x81,0	};
         boolean bEndGame = false ;
         boolean bDoneWithDay = false ;
 
@@ -160,7 +149,8 @@ public class TombstoneCity {
         gameBoard.displaySchooners(Schooners)  ;
         gameBoard.safeAreaBlueOnBlue();
         gameBoard.draw(day) ;
-        if (SMonct == 0)
+        createSprite();
+        if ( SMontab.isEmpty())
             genSmallMonsters();
 
        return( !bEndGame );
@@ -196,30 +186,6 @@ public class TombstoneCity {
 
 
 
-// --------------------------------------------------------------------------------
-//
-// RandomBlank
-//
-//  Description:	find a random blank location within playing area
-//
-//  Parameters:		None.
-//
-//  Returns:		location of blank 
-//
-// --------------------------------------------------------------------------------
-
-    int randomBlank()
-    {
-        int     blank_loc ;
-
-//        do
-//        {
-            blank_loc = randno() ;
-            blank_loc = (blank_loc >> 7)+128 ;
-//        } while (gameBoard.GetChar(blank_loc) != ' ') ;
-
-        return(blank_loc) ;
-    }
 
 
 // --------------------------------------------------------------------------------
@@ -247,7 +213,7 @@ public class TombstoneCity {
             do
             {
                 screen_loc = gameBoard.randomPlayAreaLocation() ;
-            } while (gameBoard.getChar(screen_loc) != ' ') ;
+            } while (gameBoard.getChar(screen_loc) !=  Characters.Blank.getChrIndex()) ;
 
             int r  = randno() ;
             if (r > (r &0xff))
@@ -257,7 +223,6 @@ public class TombstoneCity {
 
             gameBoard.writeChar(screen_loc, c) ;
 		    SMontab.add(screen_loc );
-            ++SMonct ;
         }
    }
 
@@ -392,8 +357,9 @@ public class TombstoneCity {
             /* kill time of same depressed	    */
         }
         newshiploc = offset + m_nShiploc ;
+
         int currentChr = gameBoard.getChar(newshiploc);
-        if ((currentChr != ' ' && currentChr !=  Characters.SafeAreaBlank.getChrIndex())|| currentChr ==  Ship.getChrIndex())
+        if ((currentChr !=Characters.Blank.getChrIndex() && currentChr !=  Characters.SafeAreaBlank.getChrIndex())|| currentChr ==  Ship.getChrIndex())
             return( false ) ;
         gameBoard.writeChar(newshiploc, Ship) ;
         gameBoard.putBlank(m_nShiploc) ;
@@ -408,53 +374,53 @@ public class TombstoneCity {
     /* ----------------------------------------------------------------------- */
     void moveSmallMonsters()
     {
-//        int     *montab ;
-//        int     newmonloc ;
-//
-//        if (SMonct != 0)
-//        {
-//
-//            int shiprow = m_nShiploc /32 ;
-//            int shipcol = CGameBoard::Column(m_nShiploc);
-//            for (montab=SMontab; montab != SMontb; montab++)
-//            {
-//                int monrow = (*montab)/32 ;
-//                int moncol = CGameBoard::Column((*montab)) ;
-//                if (shiprow == monrow)
-//                { /* on same row */
-//                    newmonloc = *montab ;
-//                    if (shipcol > moncol)
-//                        --newmonloc ;
-//                    else
-//                        ++newmonloc ;
-//
-//                    int c = gameBoard.GetChar(newmonloc);
-//                    if (c == ' ')
-//                    {
-//                        monblk(*montab, newmonloc) ;
-//					*montab = newmonloc ;
-//                        continue ;
-//                    }
-//                }
-//                if (shipcol == moncol)
-//                { /* on same column MONCOL  */
-//                    newmonloc = *montab ;
-//                    if (shiprow > monrow )
-//                        newmonloc-=32 ;
-//                    else
-//                        newmonloc+=32 ;
-//
-//                    int c = gameBoard.GetChar(newmonloc);
-//                    if (c == ' ')
-//                    {
-//                        monblk(*montab, newmonloc);
-//					*montab = newmonloc ;
-//                        continue ;
-//                    }
-//
-//                }
-//            }
-//        }
+        int     newmonloc ;
+
+        if (SMontab.size() != 0)
+        {
+
+            int shiprow = m_nShiploc /32 ;
+            int shipcol = m_nShiploc % 32;
+            for (int i = 0 ; i < SMontab.size(); i++)
+            {
+                int monsterPosition = SMontab.get(i);
+                int monrow = monsterPosition/32 ;
+                int moncol = monsterPosition %32 ;;
+                if (shiprow == monrow)
+                { /* on same row */
+                    newmonloc =monsterPosition;
+                    if (shipcol > moncol)
+                        --newmonloc ;
+                    else
+                        ++newmonloc ;
+
+                    int c = gameBoard.getChar(newmonloc);
+                    if (c == Characters.Blank.getChrIndex())
+                    {
+                        monblk(monsterPosition, newmonloc) ;
+					    SMontab.set(i, newmonloc );
+                        continue ;
+                    }
+                }
+                if (shipcol == moncol)
+                { /* on same column MONCOL  */
+                    newmonloc = monsterPosition ;
+                    if (shiprow > monrow )
+                        newmonloc-=32 ;
+                    else
+                        newmonloc+=32 ;
+
+                    int c = gameBoard.getChar(newmonloc);
+                    if (c == ' ')
+                    {
+                        monblk(monsterPosition, newmonloc);
+					    SMontab.set(i, newmonloc) ;
+                        continue ;
+                    }
+
+                }
+            }
+        }
     }
 
 // --------------------------------------------------------------------------------
@@ -533,50 +499,52 @@ public class TombstoneCity {
 //        }
     }
 
-    boolean tryMove ( int[] montab, int newmonloc)
+    boolean tryMove ( ArrayList<Integer> montab, int index, int newmonloc)
     {
         boolean moveFound = false ;
-//        int c = gameBoard.GetChar(newmonloc);
-//        if (c == ' ')
-//        {
-//            monblk(*montab, newmonloc) ;
-//		*montab = newmonloc ;
-//            moveFound =  true  ;
-//
-//        }
-//        else if (c == Ship)
-//        {
-//            moveFound = CaptureShip(montab, newmonloc) ;
-//        }
+        int c = gameBoard.getChar(newmonloc);
+        if (c == Characters.Blank.getChrIndex())
+        {
+            monblk(montab.get(index), newmonloc) ;
+		    montab.set(index, newmonloc) ;
+            moveFound =  true  ;
+
+        }
+        else if (c == Ship.getChrIndex())
+        {
+            moveFound = captureShip(montab, index, newmonloc) ;
+        }
         return( moveFound ) ;
     }
 
     void monblk(int curloc, int newloc)
     {
-//        BYTE monchar = gameBoard.GetChar(curloc) ;
-//        if (monchar == LARGE1)
-//            monchar = LARGE2 ;
-//        else if (monchar == LARGE2)
-//            monchar = LARGE1 ;
-//        else if (monchar == SMALL1)
-//            monchar = SMALL2 ;
-//        else
-//            monchar = SMALL1 ;
-//        gameBoard.WriteChar(newloc, monchar) ;
-//        gameBoard.PutBlank(curloc) ;
+        int monchar = gameBoard.getChar(curloc) ;
+
+        Characters newChar = Characters.Small1;
+
+        if (monchar == Characters.Large1.getChrIndex())
+            newChar = Characters.Large2 ;
+        else if (monchar == Characters.Large2.getChrIndex())
+            newChar = Characters.Large1 ;
+        else if (monchar == Characters.Small1.getChrIndex())
+            newChar = Characters.Small2 ;
+
+        gameBoard.writeChar(newloc, newChar) ;
+        gameBoard.putBlank(curloc) ;
     }
 
-    boolean captureShip(int[] montab, int newmonloc)
+    boolean captureShip(List<Integer> montab, int index, int newmonloc)
     {
         boolean captured = false ;
-//        if (!isShipInSafeArea())
-//        {
-//            monblk(*montab, newmonloc) ;
-//		*montab = newmonloc ;
-//            gulp() ;
-//            capture() ;
-//            captured = true  ;
-//        }
+        if (!isShipInSafeArea())
+        {
+            monblk(montab.get(index), newmonloc) ;
+		    montab.set(index, newmonloc) ;
+            gulp() ;
+            capture() ;
+            captured = true  ;
+        }
         return( captured ) ;
     }
 
@@ -776,7 +744,7 @@ public class TombstoneCity {
                     killMonster(newloc, SMALLMONTYPE);
                     stop() ;
                 }
-                else if (c == ' ' || c == Characters.SafeAreaBlank.getChrIndex())
+                else if (c ==  Characters.Blank.getChrIndex() || c == Characters.SafeAreaBlank.getChrIndex())
                 {  /* PUTBUL    */
                     gameBoard.writeChar(newloc, bullet) ;
                     gameBoard.refresh();
@@ -854,7 +822,6 @@ public class TombstoneCity {
         while(monsterTabIter.hasNext()){
             if (monsterTabIter.next() == screenloc){
                 if (montype == SMALLMONTYPE){
-                    SMonct-- ;
                     Score += SPOINT ;
                 }
                 else{
@@ -900,52 +867,52 @@ public class TombstoneCity {
     void checkForAdjacentGraves( int grave, boolean retry)
     {
 
-//        int     adjgraves[3];
-//        int     adjcount = 0 ;
-//
-//
-//        adjgraves[adjcount++] = grave ;
-//        for (int i=0; i<8; i++)
-//        {
-//            if (gameBoard.GetChar(gameBoard.Neighbor(i)+grave) == GRAVE)
-//            {
-//                adjgraves[adjcount++] = gameBoard.Neighbor(i)+grave ;
-//                if (adjcount == 3)
-//                    break ;
-//            }
-//        }
-//
-//        if (adjcount  == 3)
-//        {
-//            /* ---------------------------------------------------------------- */
-//            /*  generate 1,2, or 3 monsters from the 3 adjacent graves for     */
-//            /*  levels 1,2, and 3 respectively               */
-//            /* ---------------------------------------------------------------- */
-//
-//            for (int n=0, i=0; i < m_nLevFlg; i++)
-//            {
-//                gameBoard.writeChar(adjgraves[n], LARGE1) ;
-//			*LMontb++= adjgraves[n++] ;
-//                ++LMonct ;
-//            }
-//
-//            while ( n < 3) /* blank out graves for levels 1 or 2  */
-//            {
-//                gameBoard.PutBlank(adjgraves[n++]) ;
-//            }
-//            // ----------------------------------------------------------------
-//            //   See if sprite and grave loc still coincide
-//            // ----------------------------------------------------------------
-//            if (gameBoard.GetChar(Sprloc)  != GRAVE)
-//            { /* if location of sprite no longer contains a saguaro */
-//                gameBoard.Video()->Locate(0, (CGameBoard::MaxRow()+1)*8, 0) ;     /* turn off sprite      */
-//            }
-//        }
-//        else if (retry && adjcount == 2)
-//        {
-//            CheckForAdjacentGraves( adjgraves[1], false) ;
-//        }
-//
+        int    adjgraves[] = new int[3];
+        int     adjcount = 0 ;
+
+
+        adjgraves[adjcount++] = grave ;
+        for (int i=0; i<8; i++)
+        {
+            if (gameBoard.getChar(gameBoard.neighbor(i)+grave) == Characters.Grave.getChrIndex())
+            {
+                adjgraves[adjcount++] = gameBoard.neighbor(i)+grave ;
+                if (adjcount == 3)
+                    break ;
+            }
+        }
+
+        if (adjcount  == 3)
+        {
+            /* ---------------------------------------------------------------- */
+            /*  generate 1,2, or 3 monsters from the 3 adjacent graves for     */
+            /*  levels 1,2, and 3 respectively               */
+            /* ---------------------------------------------------------------- */
+
+            for (int n=0, i=0; i < m_nLevFlg; i++)
+            {
+                gameBoard.writeChar(adjgraves[n], Characters.Large1) ;
+			    LMontab.add(adjgraves[n++] );
+                ++LMonct ;
+            }
+
+            while ( m_nLevFlg < 3) /* blank out graves for levels 1 or 2  */
+            {
+                gameBoard.putBlank(adjgraves[m_nLevFlg]) ;
+            }
+            // ----------------------------------------------------------------
+            //   See if sprite and grave loc still coincide
+            // ----------------------------------------------------------------
+            if (gameBoard.getChar(Sprloc)  != Characters.Grave.getChrIndex())
+            { /* if location of sprite no longer contains a saguaro */
+                //gameBoard.Video()->Locate(0, (CGameBoard::MaxRow()+1)*8, 0) ;     /* turn off sprite      */
+            }
+        }
+        else if (retry && adjcount == 2)
+        {
+            checkForAdjacentGraves( adjgraves[1], false) ;
+        }
+
     }
 
     void bigsnd()
@@ -1034,12 +1001,12 @@ public class TombstoneCity {
 
         while (!found)
         {
-            while ((screen_loc = gameBoard.getChar(((randno() >> 7)+128))) != ' ') ;
+            while ((screen_loc = gameBoard.getChar(((randno() >> 7)+128))) !=  Characters.Blank.getChrIndex()) ;
             m_nShiploc = screen_loc ;
 
             for (int i=0; i<8; i++)
             {
-                if (gameBoard.getChar(screen_loc+gameBoard.neighbor(i)) == ' ')
+                if (gameBoard.getChar(screen_loc+gameBoard.neighbor(i)) == Characters.Blank.getChrIndex())
                 {
                     found = true  ;
                     break ;
@@ -1069,8 +1036,9 @@ public class TombstoneCity {
 
     void createSprite()
     {
-
-       // gameBoard.Video()->Sprite(0, 160, 15, 192, 0, 0, 0) ;
+        final byte     sprite[] ={(byte) 0xf7, (byte)0xd5, (byte) 0xc5, (byte) 0xf1, (byte) 0xf7, (byte) 0xf7, (byte) 0x81,0	};
+        virtualTI.getVideo().setChar(160, sprite);
+        virtualTI.getVideo().sprite(0, 160, 15, 192, 0, 0, 10) ;
     }
 
 
@@ -1116,7 +1084,7 @@ public class TombstoneCity {
         switch(((ITIKeyboard.TIKeyboardEvent)event).getKeyCode()){
             case AID:
                 displayHelpMenu();
-                virtualTI.getVideo().refresh();
+                //virtualTI.getVideo().refresh();
                 return ;
             case DIGIT1:
                 m_nLevFlg = 1 ;
@@ -1134,7 +1102,7 @@ public class TombstoneCity {
                 return ;
         }
         gameBegin();
-        virtualTI.getVideo().refresh();
+        //virtualTI.getVideo().refresh();
 
     }
 
@@ -1151,7 +1119,7 @@ public class TombstoneCity {
     private void handleHelpMenuReturn(TIEmulatorEvent event){
         System.out.println("handleHelpMenuReturn");
         dispLevelMenu();
-        virtualTI.getVideo().refresh();
+        //virtualTI.getVideo().refresh();
     }
     static int     rand16 ;
 

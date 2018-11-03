@@ -2,20 +2,21 @@ package com.silvertree.tombstone.tiemulation.impl;
 
 import com.silvertree.tombstone.tiemulation.ITIVideo;
 import com.silvertree.tombstone.tiemulation.TIAddress;
-import javafx.embed.swing.SwingFXUtils;
-import javafx.scene.Group;
-import javafx.scene.Scene;
+import javafx.animation.Animation;
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
+import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
 import javafx.scene.image.PixelWriter;
 import javafx.scene.image.WritableImage;
 import javafx.scene.layout.Pane;
 import javafx.scene.shape.Rectangle;
+import javafx.util.Duration;
 
 import javax.imageio.ImageIO;
-import javax.imageio.ImageTypeSpecifier;
 import java.awt.image.*;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -25,9 +26,6 @@ import java.util.logging.Logger;
 
 public class TIVideo implements ITIVideo {
     final static int COLUMNS = 32;
-
-
-
     final static int ROWS =	 24;
     final static int SPRITEWIDTH = 8 ;
     final static int SPRITEHEIGHT = 8 ;
@@ -39,7 +37,9 @@ public class TIVideo implements ITIVideo {
     VDPRam vdpRam = new VDPRam() ;
     WritableImage frameBuffer ;
 
-    final int[] TI_PALETTE = {	0xffffffff,		// 0 = transparent
+   Sprite[] sprites = new Sprite[16] ;
+
+    final int[] TI_PALETTE = {	0x00ffffff,		// 0 = transparent
                                 0xff000000,	    // 1= Black
                                 0xff00c000,  	// 2 = Medium green
                                 0xff00ff00,		// 3 = Light green
@@ -59,6 +59,7 @@ public class TIVideo implements ITIVideo {
 
     Pane pane ;
     GraphicsContext gc ;
+    Timeline refreshLoop ;
 
     public TIVideo(Pane pane ){
         this.pane = pane ;
@@ -68,7 +69,22 @@ public class TIVideo implements ITIVideo {
         initPATTAB();
         initColorTable();
         frameBuffer = createScreenBuffer() ;
+        final Duration oneFrameAmt = Duration.millis(1000 / (float) getFramesPerSecond());
+        refreshLoop = new Timeline(new KeyFrame(oneFrameAmt,  new EventHandler<ActionEvent>() {
 
+            @Override
+            public void handle(javafx.event.ActionEvent event) {
+                refresh();
+            }
+        }));
+        refreshLoop.setCycleCount(Animation.INDEFINITE);
+        refreshLoop.play() ;
+
+
+    }
+
+    private int getFramesPerSecond() {
+        return 60 ;
     }
 
     @Override
@@ -96,10 +112,6 @@ public class TIVideo implements ITIVideo {
         return new javafx.scene.image.Image(in);
     }
     private IndexColorModel getDefaultColorModel() {
-//        byte[] b = new byte[]{(byte) 0xff, 0, 0,0,(byte)0x80, (byte)0xff, (byte)0x80, (byte)0xff,0, 0, 0, 0,0, (byte)0xff, (byte) 0x80, (byte)0xff};
-//        byte[] g = new byte[] {(byte)0xff, 0, (byte)0xc0, (byte)0xff, 0,0,0, (byte)0xff, 0, 0, (byte)0x80,(byte)0xff, (byte)0x80, 0, (byte) 0x80, (byte)0xff};
-//        byte[] r = new byte[]{(byte) 0xff, 0,0, 0, 0, 0, 0, 0, (byte)0xc0, (byte)0xff, (byte) 0x80, (byte) 0xff, 0, (byte) 0xff, (byte)0x80, (byte)0xff};
-
         byte[] r = new byte[16];
         byte[] g = new byte[16] ;
         byte[] b = new byte[16] ;
@@ -146,37 +158,25 @@ public class TIVideo implements ITIVideo {
         Rectangle rect = new Rectangle(0,0, PIXELCOLUMNS, PIXELROWS) ;
 
         redrawScreen(rect);
+        drawSprites() ;
         //updateScreen() ;
     }
+
+    private void drawSprites() {
+        for (Sprite sprite : sprites){
+            if (sprite != null) {
+                sprite.move();
+                sprite.display(gc);
+            }
+        }
+    }
+
     public void redrawScreen(Rectangle rect){
         updateScreen(rect);
 //        moveAllSprites() ;
     }
 
     private void updateScreen(Rectangle rect) {
-        for (int row = (int) rect.getY()/8; row < (rect.getHeight()/8+rect.getY())/8; row++)
-        {
-            int yDest = row *8+YSCREENOFFSET ;
-            for (int col=(int) rect.getX()/8; col < (rect.getX()/8+rect.getWidth()/8); col++)
-            {
-                byte val =	vdpRam.ScreenImage[row*COLUMNS+col] ;
-                //unsigned char bColor = m_VDPRam.ColorTab[val/8];
-                //bmInfo.bmiColors[0] = palTI[bColor & 0x0f] ;
-                //bmInfo.bmiColors[1] = palTI[bColor >>4 ] ;
-
-//                int xDest = (col * 8) + XSCREENOFFSET;BufferedImage image = new BufferedImage(8, 8, BufferedImage.TYPE_BYTE_BINARY);
-//                for (int y=0; y < 8; y++){
-//                    for (int x=0; x < 8; x++) {
-//                        WritableRaster packedRaster = Raster.createPackedRaster(1, x, y);
-//
-//                    }
-//                }
-
-
-                //SetDIBitsToDevice(hdcSurf, xDest, yDest, 8, 8, 0, 0, 0, 8, &m_VDPRam.PatternTab[val*8] , &bmInfo, DIB_RGB_COLORS) ;
-
-            }
-        }
         gc.drawImage(frameBuffer, 0,0);
 
     }
@@ -187,6 +187,15 @@ public class TIVideo implements ITIVideo {
                 displaySprite(spriteAttr, false);
             }
         }
+    }
+
+    @Override
+    public void sprite(int spritenum, int patternNum, int color, int y, int x, int yvelocity, int xvelocity) {
+        int foreGroundColor = TI_PALETTE[color];
+        int backGroundColor = 0 ;       // transparent
+        WritableImage wrImage = new WritableImage(8, 8);
+        Sprite sprite = new Sprite(writePatternToImage(wrImage, 0, 0, patternNum,  foreGroundColor, backGroundColor), x, y, xvelocity, yvelocity);
+        sprites[spritenum] =  sprite;
     }
 
     private void displaySprite(SPAB spriteAttr, boolean b) {
@@ -303,27 +312,7 @@ public class TIVideo implements ITIVideo {
             int foreGroundColor = (bColor >> 4) & 0x0f;
             int backGroundColor = bColor & 0x0f ;
 
-            byte[] pattern = new byte[8] ;
-            for (int i =0 ; i < 8; i++){
-                pattern[i] = vdpRam.PatternTab[val*8+i];
-
-            }
-            PixelWriter writer = frameBuffer.getPixelWriter() ;
-            int foreGroundRGB = TI_PALETTE[foreGroundColor];
-            int backgroundRGB = TI_PALETTE[backGroundColor];
-            for (int i=0; i < 8; i++){
-                int y = nRow * 8 + i;
-                byte patMask = pattern[i];
-                for (int j =0; j < 8; j++) {
-                    int x = nCol * 8 +j;
-                    int rgb =backgroundRGB ;
-                    if ((patMask & (byte)0x80)==(byte) 0x80 ){
-                        rgb = foreGroundRGB ;
-                    }
-                    patMask = (byte) (patMask << 1) ;
-                    writer.setArgb(x, y, rgb);
-                }
-            }
+            writePatternToImage(frameBuffer, nRow, nCol, val, TI_PALETTE[foreGroundColor], TI_PALETTE[backGroundColor]);
 
 
             //         RECT rect;
@@ -332,6 +321,29 @@ public class TIVideo implements ITIVideo {
    //         InvalidateRect(rect);
 
         }
+    }
+
+    private WritableImage writePatternToImage(WritableImage wrImage, int nRow, int nCol, int patternNum, int foreGroundRGB, int backgroundRGB) {
+        byte[] pattern = new byte[8] ;
+        for (int i =0 ; i < 8; i++){
+            pattern[i] = vdpRam.PatternTab[patternNum*8+i];
+
+        }
+        PixelWriter writer = wrImage.getPixelWriter() ;
+        for (int i=0; i < 8; i++){
+            int y = nRow * 8 + i;
+            byte patMask = pattern[i];
+            for (int j =0; j < 8; j++) {
+                int x = nCol * 8 +j;
+                int rgb =backgroundRGB ;
+                if ((patMask & (byte)0x80)==(byte) 0x80 ){
+                    rgb = foreGroundRGB ;
+                }
+                patMask = (byte) (patMask << 1) ;
+                writer.setArgb(x, y, rgb);
+            }
+        }
+        return wrImage;
     }
 
     @Override
@@ -347,5 +359,13 @@ public class TIVideo implements ITIVideo {
         for (int i=0; i < chrs.length; i++)
             chrs[i] = value.charAt(i);
         displayAt(row, col, chrs);
+    }
+
+    @Override
+    public void displaySprite(int spriteNum) {
+        if (sprites[spriteNum] != null){
+            sprites[spriteNum].display(gc);
+        }
+
     }
 }

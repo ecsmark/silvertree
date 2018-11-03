@@ -62,6 +62,11 @@ public class GameBoard {
         return ((int)byteValue)   & 0x00ff  ;
     }
 
+    public Characters getCharacter(int position){
+        int charValue = getChar(position);
+        return Characters.get(charValue);
+
+    }
     public void putBlank(int position){
         putBlank(position / ITIVideo.NumColums, position % ITIVideo.NumColums);
     }
@@ -103,7 +108,7 @@ public class GameBoard {
     }
 
     public void refresh(){
-        tiVideo.refresh();
+        /*tiVideo.refresh();*/
     }
 
     public void preGameScreen()

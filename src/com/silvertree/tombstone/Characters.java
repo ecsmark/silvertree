@@ -27,4 +27,7 @@ public enum Characters {
     public int getChrIndex(){
         return chrIndex ;
     }
+    static public Characters get(int chrIndex){
+        return values()[chrIndex];
+    }
 }

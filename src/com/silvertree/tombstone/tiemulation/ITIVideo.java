@@ -16,6 +16,9 @@ public interface ITIVideo {
     void setColor(int charSet, byte color);
     void setChar(int charno, byte[] pattern);
 
+    public void sprite(int spritenum, int pattern, int color, int y, int x,int yvelocity, int xvelocity );
+    public void displaySprite(int spriteNum);
+
     final static int NumRows = 24 ;
     final static int NumColums = 32 ;
 }
