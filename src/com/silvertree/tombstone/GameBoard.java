@@ -3,14 +3,19 @@ package com.silvertree.tombstone;
 import com.silvertree.tombstone.tiemulation.ITIVideo;
 import javafx.scene.shape.Rectangle;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
 
 public class GameBoard {
     final static  Rectangle s_rectSafeArea = new Rectangle(12, 8, 19 , 13  );
 
-    final static  int MAXROW = 23 ;
-    final static int MAXCOL = 31 ;
+    public final static int NUMBERROWS = 24 ;
+    public final static int NUMBERCOLUMNS = 32 ;
+
+    final static  int MAXROW = NUMBERROWS -1;
+    final static int MAXCOL = NUMBERCOLUMNS -1  ;
     final static int MAXGRAVEPAIRS = 30 ;
 
     public final static int INITSHIPLOC = 367 ;
@@ -62,9 +67,19 @@ public class GameBoard {
         return ((int)byteValue)   & 0x00ff  ;
     }
 
+    Map<Integer, Characters> charactersMap = null ;
+    private void initCharactersMap(){
+        charactersMap = new HashMap<>();
+        Characters[] characterValues = Characters.values();
+        for (Characters characterValue : characterValues){
+            charactersMap.put(characterValue.getChrIndex(), characterValue);
+        }
+    }
     public Characters getCharacter(int position){
+        if (charactersMap == null)
+            initCharactersMap() ;
         int charValue = getChar(position);
-        return Characters.get(charValue);
+        return charactersMap.get(charValue);
 
     }
     public void putBlank(int position){

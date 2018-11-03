@@ -5,7 +5,13 @@ import com.silvertree.tombstone.tiemulation.IVirtualTI;
 import com.silvertree.tombstone.tiemulation.TIEmulatorEvent;
 import com.silvertree.tombstone.tiemulation.TIKeyboardEventListener;
 import com.silvertree.tombstone.tiemulation.impl.TIKeyboard;
+import javafx.animation.Animation;
 import javafx.animation.AnimationTimer;
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
+import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
+import javafx.util.Duration;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -45,6 +51,7 @@ public class TombstoneCity {
 
     static final ITIKeyboard.TIKeycode PANICKEY = TIKeyboard.TIKeycode.SPACE ;
     static final TIKeyboard.TIKeycode FIREKEY = TIKeyboard.TIKeycode.Q ;
+    Timeline gameLoop ;
 
     public TombstoneCity(IVirtualTI pTI99) {
         virtualTI = pTI99;
@@ -71,7 +78,6 @@ public class TombstoneCity {
     }
     public void start(){
         dispLevelMenu();
-        virtualTI.getVideo().refresh();
 
 
     }
@@ -128,10 +134,14 @@ public class TombstoneCity {
 //                }
 //            }
         }
-        virtualTI.getVideo().refresh();
 
     }
 
+    /**
+     *
+     * @param day
+     * @return
+     */
     public boolean playDay(int day)
     {
         System.out.println("playDay");
@@ -157,6 +167,7 @@ public class TombstoneCity {
 
     }
     void gameBegin(){
+
         System.out.println("gameBegin");
         virtualTI.getKeyboard().onKeyPressed(new TIKeyboardEventListener<ITIKeyboard.TIKeyboardEvent>() {
             @Override
@@ -168,6 +179,25 @@ public class TombstoneCity {
         // -------- Start a new day --------------
         day = 0;
         playDay(++day);
+        createGameloop() ;
+    }
+
+    private void doGameLoop(){
+        moveSmallMonsters();
+        moveLargeMonsters();
+    }
+
+    private void createGameloop() {
+        gameLoop = new Timeline(new KeyFrame(Duration.millis(500),  new EventHandler<ActionEvent>() {
+
+            @Override
+            public void handle(javafx.event.ActionEvent event) {
+                doGameLoop() ;
+            }
+        }));
+        gameLoop.setCycleCount(Animation.INDEFINITE);
+        gameLoop.play() ;
+
     }
 
     void gameEnd()
@@ -188,24 +218,14 @@ public class TombstoneCity {
 
 
 
-// --------------------------------------------------------------------------------
-//
-// GenSmallMonsters
-//
-//  Description: 	generate 20 small monsters
-//
-//  Parameters:		None.
-//
-//  Returns:		None.
-//
-//  Original Name:	gensml
-//
-// --------------------------------------------------------------------------------
 
+    /**
+     * generate max small monsters
+     */
     void genSmallMonsters()
     {
         System.out.println("genSmallMonsters");
-        for (int i=0; i< 20; i++)
+        for (int i=0; i< MAXSMALLMONSTERCOUNT; i++)
         {
             int  screen_loc ;
             Characters  c ;
@@ -372,20 +392,25 @@ public class TombstoneCity {
     /*  movmon.c - Move monster routines                  */
     /* ----- Move large monsters toward spaceship or small monster away ------ */
     /* ----------------------------------------------------------------------- */
+
+    /**
+     *  move Small monsters away from spaceship
+     */
     void moveSmallMonsters()
     {
+        System.out.println("move small monsters");
         int     newmonloc ;
 
         if (SMontab.size() != 0)
         {
 
-            int shiprow = m_nShiploc /32 ;
-            int shipcol = m_nShiploc % 32;
+            int shiprow = m_nShiploc /GameBoard.NUMBERCOLUMNS ;
+            int shipcol = m_nShiploc % GameBoard.NUMBERCOLUMNS;
             for (int i = 0 ; i < SMontab.size(); i++)
             {
                 int monsterPosition = SMontab.get(i);
-                int monrow = monsterPosition/32 ;
-                int moncol = monsterPosition %32 ;;
+                int monrow = monsterPosition/GameBoard.NUMBERCOLUMNS ;
+                int moncol = monsterPosition % GameBoard.NUMBERCOLUMNS ;;
                 if (shiprow == monrow)
                 { /* on same row */
                     newmonloc =monsterPosition;
@@ -406,12 +431,12 @@ public class TombstoneCity {
                 { /* on same column MONCOL  */
                     newmonloc = monsterPosition ;
                     if (shiprow > monrow )
-                        newmonloc-=32 ;
+                        newmonloc-=GameBoard.NUMBERCOLUMNS ;
                     else
-                        newmonloc+=32 ;
+                        newmonloc+=GameBoard.NUMBERCOLUMNS ;
 
-                    int c = gameBoard.getChar(newmonloc);
-                    if (c == ' ')
+                    Characters c = gameBoard.getCharacter(newmonloc);
+                    if (c == Characters.Blank)
                     {
                         monblk(monsterPosition, newmonloc);
 					    SMontab.set(i, newmonloc) ;
@@ -675,11 +700,10 @@ public class TombstoneCity {
         capture() ;
     }
 
-    // -------------------------------------------------------------------------- 
-//   fire() - fire bullet 
-//
-//	ETKEY0
-// --------------------------------------------------------------------------  
+
+    /**
+     * fire bullet
+     */
     void fire()
     {
         System.out.println("fire") ;
@@ -747,11 +771,9 @@ public class TombstoneCity {
                 else if (c ==  Characters.Blank.getChrIndex() || c == Characters.SafeAreaBlank.getChrIndex())
                 {  /* PUTBUL    */
                     gameBoard.writeChar(newloc, bullet) ;
-                    gameBoard.refresh();
                 } else
                 {
                     System.out.println("stopping bullet animator");
-                    gameBoard.refresh();
                     stop() ;
                 }
                 lastTime = currentNanoTime ;
@@ -764,19 +786,12 @@ public class TombstoneCity {
         System.out.println("-- fire() end --");
     }
 
-// --------------------------------------------------------------------------------
-//
-// KillMonster		
-//
-//  Description:	kill monster of type montype at screen location. 
-//
-//  Parameters:		[in ] screenloc - monster's screen location 
-//					[in ] montype - monster type
-//
-//  Returns:
-//
-// --------------------------------------------------------------------------------
-
+    /**
+     * kill monster of type montype at screen location.
+     *
+     * @param screenloc  monster's screen location
+     * @param montype monster type
+     */
     void killMonster(int screenloc, int montype)
     {
         System.out.println("killMonster");
@@ -807,12 +822,10 @@ public class TombstoneCity {
                 if (last == 0) {
                     last = now;
                     gameBoard.writeChar(screenloc, Characters.Explode) ;
-                    gameBoard.refresh();
 
                 }
                 else if (now - last > 1000L*1000L*240){
                     gameBoard.writeChar(screenloc, replacementChar);
-                    gameBoard.refresh();
                     stop();
                 }
             }
@@ -852,18 +865,12 @@ public class TombstoneCity {
         }
     }
 
-// --------------------------------------------------------------------------------
-//
-// CheckForAdjacentGraves
-//
-//  Description:	check for three adjacent graves.  If so they become monsters. 
-//
-//  Parameters:		[in ] grave - check for graves around this location
-//
-//  Returns:		None.
-//
-// --------------------------------------------------------------------------------
-
+    /**
+     *
+     * check for three adjacent graves.  If so they become monsters.
+     * @param grave check for graves around this location
+     * @param retry
+     */
     void checkForAdjacentGraves( int grave, boolean retry)
     {
 
@@ -941,19 +948,9 @@ public class TombstoneCity {
 //        m_pTI99->Sound(soundlist) ;
     }
 
-// --------------------------------------------------------------------------------
-//
-// capture
-//
-//  Description:	capture ship routine - decrement #schooners and return to 
-//					safe area
-//
-//  Parameters:
-//
-//  Returns:
-//
-// --------------------------------------------------------------------------------
-
+    /**
+     * capture ship routine - decrement #schooners and return to safe area
+     */
     void capture()
     {
         if (Schooners == 0)
@@ -1019,26 +1016,14 @@ public class TombstoneCity {
     }
 
 
-
-
-
-// --------------------------------------------------------------------------------
-//
-// CreateSprite
-//
-//  Description: 	subroutine to set up sprite attribute block
-//
-//  Parameters:
-//
-//  Returns:
-//
-// --------------------------------------------------------------------------------
-
+    /**
+     * create sprite used to highlight cactus
+     */
     void createSprite()
     {
         final byte     sprite[] ={(byte) 0xf7, (byte)0xd5, (byte) 0xc5, (byte) 0xf1, (byte) 0xf7, (byte) 0xf7, (byte) 0x81,0	};
         virtualTI.getVideo().setChar(160, sprite);
-        virtualTI.getVideo().sprite(0, 160, 15, 192, 0, 0, 10) ;
+        virtualTI.getVideo().sprite(0, 160, 15, 192, 0, 0, 0) ;
     }
 
 
@@ -1084,7 +1069,6 @@ public class TombstoneCity {
         switch(((ITIKeyboard.TIKeyboardEvent)event).getKeyCode()){
             case AID:
                 displayHelpMenu();
-                //virtualTI.getVideo().refresh();
                 return ;
             case DIGIT1:
                 m_nLevFlg = 1 ;
@@ -1102,7 +1086,6 @@ public class TombstoneCity {
                 return ;
         }
         gameBegin();
-        //virtualTI.getVideo().refresh();
 
     }
 
@@ -1116,10 +1099,9 @@ public class TombstoneCity {
         });
     }
 
-    private void handleHelpMenuReturn(TIEmulatorEvent event){
+    private void handleHelpMenuReturn(TIEmulatorEvent event) {
         System.out.println("handleHelpMenuReturn");
         dispLevelMenu();
-        //virtualTI.getVideo().refresh();
     }
     static int     rand16 ;
 
