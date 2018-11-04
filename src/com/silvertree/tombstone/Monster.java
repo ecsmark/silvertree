@@ -32,4 +32,9 @@ public abstract class Monster {
         }
         return false ;
     }
+
+    @Override
+    public String toString() {
+        return getClass().getSimpleName()+"[curLocation="+getCurLocation()+"]";
+    }
 }

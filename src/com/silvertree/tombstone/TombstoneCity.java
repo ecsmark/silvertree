@@ -299,8 +299,8 @@ public class TombstoneCity {
                 {
                     /* put up sprite at generator     */
                     Sprloc = m_nGencur ;
-                    int y = (m_nGencur / GameBoard.NUMBERCOLUMNS) * 8 ;
-                    int x = (m_nGencur % GameBoard.NUMBERCOLUMNS) * 8 ;
+                    int y = GameBoard.row(m_nGencur ) * 8;
+                    int x = GameBoard.column(m_nGencur) * 8 ;
 
                     virtualTI.getVideo().locateSprite(0, y, x);
                     //gameBoard.Video()->Locate(0, GameBoard.row(m_nGencur)*8,GameBoard.column(m_nGencur)*8) ;
@@ -326,8 +326,8 @@ public class TombstoneCity {
 
         // put up sprite at generator 
         Sprloc = m_nGencur ;
-        int y = (m_nGencur / GameBoard.NUMBERCOLUMNS)*8;
-        int x =  (m_nGencur % GameBoard.NUMBERCOLUMNS)*8;
+        int y = GameBoard.row(m_nGencur )*8;
+        int x =  GameBoard.column(m_nGencur )*8;
 
         virtualTI.getVideo().locateSprite(0, y, x) ;
 
@@ -444,6 +444,7 @@ public class TombstoneCity {
      */
     void moveLargeMonsters()
     {
+        System.out.println("moveLargeMonsters");
         int     newmonloc ;
         int     moveflg = 0;
 
@@ -505,6 +506,7 @@ public class TombstoneCity {
 
             }
         }
+        System.out.println("-- moveLargeMonsters end --");
     }
 
     /**
@@ -515,6 +517,7 @@ public class TombstoneCity {
      */
     boolean tryMove ( Monster monster, int newmonloc)
     {
+        System.out.println("tryMove("+monster.toString()+", "+newmonloc+")");
         boolean moveFound = false ;
         Characters c = gameBoard.getCharacter(newmonloc);
         if (c == Characters.Blank)
@@ -557,6 +560,7 @@ public class TombstoneCity {
      */
     boolean captureShip(Monster monster, int newmonloc)
     {
+        System.out.println("captureShip("+monster.toString()+", "+newmonloc+")");
         boolean captured = false ;
         if (!isShipInSafeArea())
         {
