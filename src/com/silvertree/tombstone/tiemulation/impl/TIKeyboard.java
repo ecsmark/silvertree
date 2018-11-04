@@ -69,15 +69,26 @@ public class TIKeyboard implements ITIKeyboard {
             tiKeyCode = translateDigitKey(keyCode);
         }else if (keyCode.isLetterKey()){
             tiKeyCode = translateLetterKey(keyCode);
-        }
+        }else if (keyCode.isWhitespaceKey())
+            tiKeyCode = translateWhitespaceKey(keyCode);
         System.out.println("translate("+keyCode.getName()+" to "+tiKeyCode.toString());
         return tiKeyCode;
     }
 
+    private TIKeycode translateWhitespaceKey(KeyCode keyCode)
+    {
+        switch(keyCode){
+            case SPACE:
+                return TIKeycode.SPACE;
+        }
+        return TIKeycode.UNMAPPED ;
+    }
     private TIKeycode translateLetterKey(KeyCode keyCode) {
         switch(keyCode){
             case Q:
                 return TIKeycode.Q;
+            case SPACE:
+                return TIKeycode.SPACE;
         }
         return TIKeycode.UNMAPPED;
     }
