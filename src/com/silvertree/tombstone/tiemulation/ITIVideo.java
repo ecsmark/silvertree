@@ -4,8 +4,6 @@ import com.silvertree.tombstone.Characters;
 
 public interface ITIVideo {
     void refresh() ;
-    boolean vmbw(TIAddress addr, char bytes[], short count);
-    char vsbr(TIAddress addr);
 
     void wrChar(int nRow, int nCol, int val);
     void displayAt(int row, int col, int[] value);

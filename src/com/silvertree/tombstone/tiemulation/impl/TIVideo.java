@@ -68,6 +68,8 @@ public class TIVideo implements ITIVideo {
         gc=  canvas.getGraphicsContext2D();
         initPATTAB();
         initColorTable();
+        initSpriteTable();
+
         frameBuffer = createScreenBuffer() ;
         final Duration oneFrameAmt = Duration.millis(1000 / (float) getFramesPerSecond());
         refreshLoop = new Timeline(new KeyFrame(oneFrameAmt,  new EventHandler<ActionEvent>() {
@@ -139,17 +141,8 @@ public class TIVideo implements ITIVideo {
         BufferedImage image = new BufferedImage(cm, raster, false, null);
         return image;
     }
-    @Override
-    public boolean vmbw(TIAddress addr, char[] bytes, short count) {
-        return false;
-    }
 
-    @Override
-    public char vsbr(TIAddress addr) {
-        return 0;
-    }
-
-    public void initSpriteTable(String bitmap){
+    public void initSpriteTable(){
         vdpRam.initSpriteAttributeBlocks();
     }
 
@@ -181,14 +174,6 @@ public class TIVideo implements ITIVideo {
 
     }
 
-    private void moveAllSprites(){
-        for(SPAB spriteAttr : vdpRam.getSpriteAttrs()){
-            if (spriteAttr.spriteYLoc != VDPRam.SPRITEUNUSED){
-                displaySprite(spriteAttr, false);
-            }
-        }
-    }
-
     @Override
     public void sprite(int spritenum, int patternNum, int color, int y, int x, int yvelocity, int xvelocity) {
         int foreGroundColor = TI_PALETTE[color];
@@ -204,9 +189,6 @@ public class TIVideo implements ITIVideo {
         if (sprite != null){
             sprite.locate(x, y);
         }
-    }
-
-    private void displaySprite(SPAB spriteAttr, boolean b) {
     }
 
     private void initColorTable(){
@@ -321,13 +303,6 @@ public class TIVideo implements ITIVideo {
             int backGroundColor = bColor & 0x0f ;
 
             writePatternToImage(frameBuffer, nRow, nCol, val, TI_PALETTE[foreGroundColor], TI_PALETTE[backGroundColor]);
-
-
-            //         RECT rect;
-   //         rect.top = rect.bottom = nRow;
-   //         rect.left = rect.right = nCol;
-   //         InvalidateRect(rect);
-
         }
     }
 

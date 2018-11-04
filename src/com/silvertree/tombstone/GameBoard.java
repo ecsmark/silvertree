@@ -21,6 +21,10 @@ public class GameBoard {
     public final static int INITSHIPLOC = 367 ;
     public final static int PLAYAREABG = 98;
     public final static int PLAYAREAEND = 670;
+    public final static int SAFEAREABEGINCOLUMN = 12 ;
+    public final static int SAFEAREAENDCOLUMN = 18 ;
+    public final static int SAFEAREABEGINROW = 8 ;
+    public final static int SAFEAREENDROW = 14 ;
 
     final static int BORDER[] =
             {96, 96, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32,
@@ -74,7 +78,7 @@ public class GameBoard {
         return ((int)byteValue)   & 0x00ff  ;
     }
 
-    Map<Integer, Characters> charactersMap = null ;
+    private Map<Integer, Characters> charactersMap = null ;
     private void initCharactersMap(){
         charactersMap = new HashMap<>();
         Characters[] characterValues = Characters.values();
@@ -90,19 +94,12 @@ public class GameBoard {
 
     }
     public void putBlank(int position){
-        putBlank(position / ITIVideo.NumColums, position % ITIVideo.NumColums);
+        putBlank(row(position), column(position));
     }
     public void putBlank(int row, int col)
     {
 
-        int     c = ' ' ;
-
-        //   check for location in safe area
-        if (row >= 8 && row <= 14)
-        {
-            if (col >=12 && col <= 18)
-                c = Characters.SafeAreaBlank.getChrIndex() ;
-        }
+        Characters  c = isInSafeArea(row, col)? Characters.SafeAreaBlank : Characters.Blank ;
 
         writeChar(row, col, c) ;
     }
@@ -122,15 +119,11 @@ public class GameBoard {
     }
 
     private void writeChar(int position, int chr){
-        writeChar(position / ITIVideo.NumColums, position % ITIVideo.NumColums, chr);
+        writeChar(row(position), column(position), chr);
     }
 
     public void writeChar(int row, int col, int  chr){
         tiVideo.wrChar(row, col,  chr);
-    }
-
-    public void refresh(){
-        /*tiVideo.refresh();*/
     }
 
     public void preGameScreen()
@@ -161,21 +154,21 @@ public class GameBoard {
                 Characters.SafeAreaBlank,Characters.SafeAreaBlank,Characters.SafeAreaBlank,Characters.SafeAreaBlank};
 
 
-        for (int i=0; i<28; i++)
+        for (int i=0; i<NUMBERCOLUMNS-4; i++)
         {
             writeChar(21, 2+i, Characters.BottomEdge) ;
 
         }
 
         tiVideo.displayAt(22,3, "DAY  POPULATION  SCHOONERS") ;
-        int row = 8 ;
+        int row = SAFEAREABEGINROW ;
         for (int i=0; i<3; i++)
         {
-            displayAt(row++,12, outl6) ;    // safe area
-            displayAt(row++,12, outl7) ;
+            displayAt(row++,SAFEAREABEGINCOLUMN, outl6) ;    // safe area
+            displayAt(row++,SAFEAREABEGINCOLUMN, outl7) ;
         }
 
-        displayAt(row++,12, outl6) ;     // safe area
+        displayAt(row++,SAFEAREABEGINCOLUMN, outl6) ;     // safe area
 
         // ----------------------------------------------------
         // Throw up pairs of graves randomly
@@ -215,7 +208,6 @@ public class GameBoard {
 
     void DisplayNumeric(int val, int row, int col)
     {
-
         while (val > 0)
         {
             int rem = val % 10 ;
@@ -246,15 +238,31 @@ public class GameBoard {
     }
 
 
-    public boolean isInSafeArea(int position)
-    {
-        int row = position/ 32;
-        int col = position % 32 ;
-
-        return (row >= 8 &&  row <= 14 && col >= 12 && col <= 18) ? true : false ;
+    /**
+     *
+     * @param position absolute screen character position
+     * @return
+     */
+    public boolean isInSafeArea(int position) {
+        return isInSafeArea(row(position), column(position));
 
     }
 
+    /**
+     *
+     * @param row
+     * @param col
+     * @return
+     */
+    public boolean isInSafeArea(int row, int col){
+        return (row >= SAFEAREABEGINROW &&  row <= SAFEAREENDROW && col >= SAFEAREABEGINCOLUMN && col <= SAFEAREAENDCOLUMN)  ;
+
+    }
+
+    /**
+     *
+     * @return true if safe area exits blocked by Grave character
+     */
     public boolean isSafeAreaSurrounded()
     {
         final int surm[] =
@@ -264,7 +272,7 @@ public class GameBoard {
 
         for(int position : surm)
         {
-            if (getChar(position) != Characters.Grave.getChrIndex())
+            if (getCharacter(position) != Characters.Grave)
             {
                 return(false) ;
             }
@@ -303,7 +311,7 @@ public class GameBoard {
     boolean areAllNeighborsBlank(int screenloc)
     {
         boolean areBlank = true ;
-        for (int i=0; i< 8 && areBlank; i++)
+        for (int i=0; i< s_neighborCells.length && areBlank; i++)
         {
             areBlank = (tiVideo.getChar(screenloc+neighbor(i)) == ' ') ;
         }
@@ -340,6 +348,9 @@ public class GameBoard {
         }
     }
 
+    /**
+     * setup the character pattern table for the characters used in the GameBoard
+     */
     private void initChars(){
 
         tiVideo.setChar(92, new byte[]{0x3c, 0x42, (byte)0x99, (byte)0x0a1, (byte)0xa1,(byte) 0x099,0x042,0x03c}) ;    // copyright
@@ -404,12 +415,8 @@ public class GameBoard {
     private void initRandom() {
         random = ThreadLocalRandom.current();
     }
-    private static long rand16 = Math.abs((long) (Math.random() * 10000.0));
-    short randno()
-    {
 
-        int  n = (int)( 28645*rand16 +31417) ;
-        rand16 = n ;
-        return((short) (Math.abs(rand16) & 0x7fff) );
+    public int getRandom(int min, int max){
+        return random.nextInt(max-min) + max ;
     }
 }

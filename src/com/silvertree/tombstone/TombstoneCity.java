@@ -10,6 +10,8 @@ import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.util.Duration;
 
+import java.util.Random;
+
 public class TombstoneCity {
 
     int   	m_nLevFlg  ;
@@ -227,7 +229,7 @@ public class TombstoneCity {
                 screen_loc = gameBoard.randomPlayAreaLocation() ;
             } while (gameBoard.getCharacter(screen_loc) !=  Characters.Blank) ;
 
-            int r  = randno() ;
+            int r  = gameBoard.getRandom(0, Short.MAX_VALUE) ;
             if (r > (r &0xff))
                 c = Characters.Small1 ;
             else
@@ -484,7 +486,7 @@ public class TombstoneCity {
 
                 }
 
-                if ((randno() & 0x0001) != 0)
+                if ( gameBoard.getRandom(0, 1) != 0)
                 { /* try column  */
                     newmonloc = monster.getCurLocation();
 
@@ -878,9 +880,10 @@ public class TombstoneCity {
                 new LargeMonster(adjgraves[n++]).addToMontab();
             }
 
-            while ( m_nLevFlg < 3) /* blank out graves for levels 1 or 2  */
+            if ( m_nLevFlg < 3) /* blank out graves for levels 1 or 2  */
             {
-                gameBoard.putBlank(adjgraves[m_nLevFlg]) ;
+                for (int i=0 ; i < m_nLevFlg; i++)
+                    gameBoard.putBlank(adjgraves[i]) ;
             }
             // ----------------------------------------------------------------
             //   See if sprite and grave loc still coincide
@@ -954,27 +957,18 @@ public class TombstoneCity {
         return gameBoard.isInSafeArea(m_nShiploc);
     }
 
-// --------------------------------------------------------------------------------
-//
-// arbshp
-//
-//  Description:	routine to put ship in 1st available location outside of the safe area
-//
-//  Parameters:
-//
-//  Returns:
-//
-// --------------------------------------------------------------------------------
-
+    /**
+     * put ship in 1st available location outside of the safe area
+     */
     void arbshp()
     {
+        System.out.println("arbshp()");
         int     screen_loc ;
         boolean     found = false;
 
         while (!found)
         {
-            screen_loc = ((randno() >> 7)+128);
-            while (gameBoard.getCharacter(screen_loc) !=  Characters.Blank) ;
+            screen_loc = gameBoard.getRandom(GameBoard.PLAYAREABG, GameBoard.PLAYAREAEND);
             m_nShiploc = screen_loc ;
 
             for (int i=0; i<8; i++)
@@ -986,9 +980,8 @@ public class TombstoneCity {
                 }
             }
         }
-//
+
         gameBoard.writeChar(m_nShiploc, Ship) ;
-//        keydep() ;
     }
 
 
@@ -1079,16 +1072,4 @@ public class TombstoneCity {
         System.out.println("handleHelpMenuReturn");
         dispLevelMenu();
     }
-    static int     rand16 ;
-
-    short randno()
-    {
-        long   n ;
-
-        n = 28645*rand16 +31417 ;
-        rand16 = (int) n ;
-        return((short) rand16) ;
-    }
-
-
 }

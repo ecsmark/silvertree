@@ -21,8 +21,10 @@ public class VDPRam {
     byte[] PatternTab = new byte[256 * 8];
 
     public void initSpriteAttributeBlocks() {
-        for( SPAB spriteAttr : spriteAttrs)
+        for (int i=0; i < spriteAttrs.length; i++)
+            spriteAttrs[i] = new SPAB();
 
+        for( SPAB spriteAttr : spriteAttrs)
         {
             // y location of SPRITEUNUSED means sprite (and all succeeding sprites)
             // is undefined

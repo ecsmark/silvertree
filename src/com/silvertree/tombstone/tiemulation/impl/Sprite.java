@@ -14,8 +14,6 @@ public class Sprite {
     int y ;
     int xvel;
     int yvel ;
-    int xtime ;
-    int ytime ;
 
     public Sprite(Image spriteImage, int x, int y, int xvel, int yvel){
         this.spriteImage = spriteImage ;
@@ -82,5 +80,10 @@ public class Sprite {
     public void locate(int x, int y) {
         this.x = x ;
         this.y = y ;
+    }
+
+    @Override
+    public String toString() {
+        return getClass().getSimpleName()+"[x="+x+",y="+y+",xvel="+xvel+",yvel="+yvel+"]";
     }
 }
