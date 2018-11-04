@@ -11,7 +11,6 @@ import javafx.event.EventHandler;
 import javafx.util.Duration;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 public class TombstoneCity {
@@ -28,8 +27,6 @@ public class TombstoneCity {
     Characters		Ship ;
     int     day = 0 ;
 
-    ArrayList<Integer> SMontab ;
-    List<Integer> LMontab;   /* Large monster table     */
     int		MouseFlag ;     /* mouse installed         */
 
     GameBoard gameBoard ;
@@ -38,12 +35,6 @@ public class TombstoneCity {
     static final int BONUS = 1000 ;
     static final int LPOINT	 =  150;
     static final int SPOINT =   100;
-
-    static final int MAXLARGEMONSTERCOUNT = 9;
-    static final int MAXSMALLMONSTERCOUNT = 20 ;
-
-    static final int SMALLMONTYPE = 0 ;
-    static final int LARGEMONTYPE =1;
 
     static final ITIKeyboard.TIKeycode PANICKEY = TIKeyboard.TIKeycode.SPACE ;
     static final TIKeyboard.TIKeycode FIREKEY = TIKeyboard.TIKeycode.Q ;
@@ -144,8 +135,9 @@ public class TombstoneCity {
         boolean bEndGame = false ;
         boolean bDoneWithDay = false ;
 
-        LMontab = new ArrayList<>(MAXLARGEMONSTERCOUNT);
-        SMontab = new ArrayList<>(MAXSMALLMONSTERCOUNT);
+        LargeMonster.createMontab();
+        SmallMonster.createMontab() ;
+
         gameBoard.preGameScreen() ;
         gameBoard.displayDay(day);
         Score += BONUS ;
@@ -154,7 +146,7 @@ public class TombstoneCity {
         gameBoard.safeAreaBlueOnBlue();
         gameBoard.draw(day) ;
         createSprite();
-        if ( SMontab.isEmpty())
+        if (SmallMonster.isEmpty())
             genSmallMonsters();
 
        return( !bEndGame );
@@ -230,7 +222,7 @@ public class TombstoneCity {
     void genSmallMonsters()
     {
         System.out.println("genSmallMonsters");
-        for (int i=0; i< MAXSMALLMONSTERCOUNT; i++)
+        for (int i=0; i< SmallMonster.MAXSMALLMONSTERCOUNT; i++)
         {
             int  screen_loc ;
             Characters  c ;
@@ -247,7 +239,7 @@ public class TombstoneCity {
                 c = Characters.Small2;
 
             gameBoard.writeChar(screen_loc, c) ;
-		    SMontab.add(screen_loc );
+            new SmallMonster(screen_loc).addToMontab();
         }
    }
 
@@ -345,11 +337,12 @@ public class TombstoneCity {
         virtualTI.getVideo().locateSprite(0, y, x) ;
 
         // release Large monster
-        if (LMontab.size() < MAXLARGEMONSTERCOUNT)
+        if (!LargeMonster.isFull())
         {
             gameBoard.writeChar(loc, Characters.Large2) ;
             ++m_nGencur ;
-            LMontab.add(loc);
+            Monster monster = new LargeMonster(loc);
+            monster.addToMontab();
         }
         gameBoard.safeAreaBlueOnBlue() ;
     }
@@ -379,7 +372,7 @@ public class TombstoneCity {
             offset = 0 ;
         }
 
-        if (LMontab.size() == 0)
+        if (LargeMonster.isEmpty())
         {
             /* kill time of same depressed	    */
         }
@@ -408,14 +401,14 @@ public class TombstoneCity {
         System.out.println("move small monsters");
         int     newmonloc ;
 
-        if (SMontab.size() != 0)
+        if (!SmallMonster.isEmpty())
         {
 
             int shiprow = m_nShiploc /GameBoard.NUMBERCOLUMNS ;
             int shipcol = m_nShiploc % GameBoard.NUMBERCOLUMNS;
-            for (int i = 0 ; i < SMontab.size(); i++)
+            for(Monster monster : SmallMonster.getMonsters())
             {
-                int monsterPosition = SMontab.get(i);
+                int monsterPosition = monster.getCurLocation();
                 int monrow = monsterPosition/GameBoard.NUMBERCOLUMNS ;
                 int moncol = monsterPosition % GameBoard.NUMBERCOLUMNS ;;
                 if (shiprow == monrow)
@@ -430,7 +423,7 @@ public class TombstoneCity {
                     if (c == Characters.Blank)
                     {
                         monblk(monsterPosition, newmonloc) ;
-					    SMontab.set(i, newmonloc );
+                        monster.setCurLocation(newmonloc);
                         continue ;
                     }
                 }
@@ -446,7 +439,7 @@ public class TombstoneCity {
                     if (c == Characters.Blank)
                     {
                         monblk(monsterPosition, newmonloc);
-					    SMontab.set(i, newmonloc) ;
+                        monster.setCurLocation(newmonloc);
                         continue ;
                     }
 
@@ -767,12 +760,12 @@ public class TombstoneCity {
                 Characters c = gameBoard.getCharacter(newloc) ;
                 if (c == Characters.Large1 || c == Characters.Large2)
                 { /* KILLAR   */
-                    killMonster(newloc, LARGEMONTYPE) ;
+                    killMonster(new LargeMonster(newloc)) ;
                     stop() ;
                     /* Kil0 */
                 }
                 else if (c == Characters.Small1 || c == Characters.Small2) {
-                    killMonster(newloc, SMALLMONTYPE);
+                    killMonster(new SmallMonster(newloc));
                     stop() ;
                 }
                 else if (c ==  Characters.Blank || c == Characters.SafeAreaBlank)
@@ -793,32 +786,17 @@ public class TombstoneCity {
         System.out.println("-- fire() end --");
     }
 
-    /**
-     * kill monster of type montype at screen location.
-     *
-     * @param screenloc  monster's screen location
-     * @param montype monster type
-     */
-    void killMonster(int screenloc, int montype)
-    {
-        System.out.println("killMonster");
 
-        List<Integer> montab = SMontab ;
+    void killMonster( Monster monster)
+    {
+        System.out.println("killMonster "+monster.getClass().getName());
+
         /*   generate explosion - graphic and sound       */
 //        bigsnd() ;
 //        killtime(24000) ;
 
-        Characters replacementChar = Characters.Blank ;
-        if (montype == LARGEMONTYPE)
-        {   /* for large monsters display grave  (KIL1A)    */
-            gameBoard.writeChar(screenloc, Characters.Grave) ;
-            montab = LMontab ;
-        }
-        else
-        {   /* for small monsters put blank        */
-            gameBoard.putBlank(screenloc) ;
-            montab = SMontab ;
-        }
+        Characters replacementChar = monster.replaceCharacter();
+        gameBoard.writeChar(monster.getCurLocation(), replacementChar);
 
         new AnimationTimer(){
 
@@ -828,33 +806,25 @@ public class TombstoneCity {
             public void handle(long now) {
                 if (last == 0) {
                     last = now;
-                    gameBoard.writeChar(screenloc, Characters.Explode) ;
+                    gameBoard.writeChar(monster.getCurLocation(), Characters.Explode) ;
 
                 }
                 else if (now - last > 1000L*1000L*240){
-                    gameBoard.writeChar(screenloc, replacementChar);
+                    gameBoard.writeChar(monster.getCurLocation(), monster.replaceCharacter());
                     stop();
                 }
             }
         }.start() ;
 
-        Iterator<Integer> monsterTabIter = montab.iterator();
-        while(monsterTabIter.hasNext()){
-            if (monsterTabIter.next() == screenloc){
-                if (montype == SMALLMONTYPE){
-                    Score += SPOINT ;
-                }
-                else{
-                    Score += LPOINT ;
-                }
-                monsterTabIter.remove();
-            }
+        if (monster.removeFromMontab())
+        {
+            Score += monster.getPointValue() ;
         }
         gameBoard.displayScore(Score) ;
 
-        if (montype == LARGEMONTYPE)
+        if (monster instanceof LargeMonster)
         {
-            checkForAdjacentGraves(screenloc, false) ;
+            checkForAdjacentGraves(monster.getCurLocation(), false) ;
         }
         /* ---------------------------------------------------------------- */
         /*     See  if ship is inside safe area  and surrounded    */
@@ -905,7 +875,7 @@ public class TombstoneCity {
             for (int n=0, i=0; i < m_nLevFlg; i++)
             {
                 gameBoard.writeChar(adjgraves[n], Characters.Large1) ;
-			    LMontab.add(adjgraves[n++] );
+                new LargeMonster(adjgraves[n++]).addToMontab();
             }
 
             while ( m_nLevFlg < 3) /* blank out graves for levels 1 or 2  */
