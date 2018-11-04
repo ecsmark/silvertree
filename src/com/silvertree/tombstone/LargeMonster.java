@@ -39,6 +39,9 @@ public class LargeMonster extends Monster {
         return LMontab;
     }
 
+    static List<Monster> getMonsters(){
+        return LMontab ;
+    }
     static boolean isEmpty(){
         return LMontab.isEmpty();
     }

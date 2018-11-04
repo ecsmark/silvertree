@@ -10,9 +10,6 @@ import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.util.Duration;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public class TombstoneCity {
 
     int   	m_nLevFlg  ;
@@ -33,8 +30,6 @@ public class TombstoneCity {
     IVirtualTI virtualTI ;
 
     static final int BONUS = 1000 ;
-    static final int LPOINT	 =  150;
-    static final int SPOINT =   100;
 
     static final ITIKeyboard.TIKeycode PANICKEY = TIKeyboard.TIKeycode.SPACE ;
     static final TIKeyboard.TIKeycode FIREKEY = TIKeyboard.TIKeycode.Q ;
@@ -308,7 +303,7 @@ public class TombstoneCity {
                     int x = (m_nGencur % GameBoard.NUMBERCOLUMNS) * 8 ;
 
                     virtualTI.getVideo().locateSprite(0, y, x);
-                    //gameBoard.Video()->Locate(0, CGameBoard::Row(m_nGencur)*8,CGameBoard::Column(m_nGencur)*8) ;
+                    //gameBoard.Video()->Locate(0, GameBoard.row(m_nGencur)*8,GameBoard.column(m_nGencur)*8) ;
 
                     if (Sprflg != 1)
                     { /* release Large monster    */
@@ -388,11 +383,6 @@ public class TombstoneCity {
     }
 
 
-    /* ----------------------------------------------------------------------- */
-    /*  movmon.c - Move monster routines                  */
-    /* ----- Move large monsters toward spaceship or small monster away ------ */
-    /* ----------------------------------------------------------------------- */
-
     /**
      *  move Small monsters away from spaceship
      */
@@ -448,96 +438,95 @@ public class TombstoneCity {
         }
     }
 
-// --------------------------------------------------------------------------------
-//
-// MoveLargeMonsters
-//
-//  Description:
-//
-//  Parameters:
-//
-//  Returns:
-//
-// --------------------------------------------------------------------------------
 
+    /**
+     *
+     */
     void moveLargeMonsters()
     {
         int     newmonloc ;
         int     moveflg = 0;
 
-//        if (LMonct != 0)
-//        {
-//
-//            int shiprow = CGameBoard::Row(m_nShiploc) ;
-//            int shipcol = CGameBoard::Column(m_nShiploc );
-//            for (int* montab=LMontab; montab != LMontb; montab++)
-//            {
-//                int monrow = CGameBoard::Row(*montab);
-//                int moncol = CGameBoard::Column(*montab) ;
-//                if (shiprow == monrow)
-//                { /* on same row */
-//                    newmonloc = *montab ;
-//
-//                    if (moncol> shipcol)
-//                        --newmonloc ;
-//                    else
-//                        ++newmonloc ;
-//
-//                    if (tryMove(montab, newmonloc))
-//                        continue ;
-//                }
-//
-//                if ( shipcol == moncol)
-//                { /* on same column MONCOL  */
-//                    newmonloc = *montab ;
-//                    if (shiprow > monrow)
-//                        newmonloc+=32 ;
-//                    else
-//                        newmonloc-=32 ;
-//
-//                    if (TryMove(montab, newmonloc))
-//                        continue ;
-//
-//                }
-//
-//                if (randno() & 0x0001)
-//                { /* try column  */
-//                    newmonloc = *montab ;
-//
-//                    if (moncol> shipcol)
-//                        --newmonloc ;
-//                    else
-//                        ++newmonloc ;
-//
-//                    if(TryMove(montab, newmonloc))
-//                        continue ;
-//                }
-//                newmonloc = *montab ;
-//                if (shiprow > monrow)
-//                    newmonloc+=32 ;
-//                else
-//                    newmonloc-=32 ;
-//
-//                tryMove(montab, newmonloc) ;
-//
-//            }
-//        }
+        if (!LargeMonster.isEmpty() )
+        {
+
+            int shiprow = GameBoard.row(m_nShiploc) ;
+            int shipcol = GameBoard.column(m_nShiploc );
+
+            for (Monster monster : LargeMonster.getMonsters())
+            {
+                int monrow = GameBoard.row(monster.getCurLocation());
+                int moncol = GameBoard.column(monster.getCurLocation()) ;
+                if (shiprow == monrow)
+                { /* on same row */
+                    newmonloc = monster.getCurLocation();
+
+                    if (moncol> shipcol)
+                        --newmonloc ;
+                    else
+                        ++newmonloc ;
+
+                    if (tryMove(monster, newmonloc))
+                        continue ;
+                }
+
+                if ( shipcol == moncol)
+                { /* on same column MONCOL  */
+                    newmonloc = monster.getCurLocation() ;
+                    if (shiprow > monrow)
+                        newmonloc+=32 ;
+                    else
+                        newmonloc-=32 ;
+
+                    if (tryMove(monster, newmonloc))
+                        continue ;
+
+                }
+
+                if ((randno() & 0x0001) != 0)
+                { /* try column  */
+                    newmonloc = monster.getCurLocation();
+
+                    if (moncol> shipcol)
+                        --newmonloc ;
+                    else
+                        ++newmonloc ;
+
+                    if(tryMove(monster, newmonloc))
+                        continue ;
+                }
+                newmonloc = monster.getCurLocation() ;
+                if (shiprow > monrow)
+                    newmonloc+=32 ;
+                else
+                    newmonloc-=32 ;
+
+                tryMove(monster, newmonloc) ;
+
+            }
+        }
     }
 
-    boolean tryMove ( ArrayList<Integer> montab, int index, int newmonloc)
+    /**
+     *
+     * @param monster
+     * @param newmonloc
+     * @return
+     */
+    boolean tryMove ( Monster monster, int newmonloc)
     {
         boolean moveFound = false ;
         Characters c = gameBoard.getCharacter(newmonloc);
         if (c == Characters.Blank)
         {
-            monblk(montab.get(index), newmonloc) ;
-		    montab.set(index, newmonloc) ;
+            monblk(monster.getCurLocation(), newmonloc) ;
+            monster.setCurLocation(newmonloc);
             moveFound =  true  ;
 
         }
         else if (c == Ship)
         {
-            moveFound = captureShip(montab, index, newmonloc) ;
+            moveFound = captureShip(monster, newmonloc) ;
         }
         return( moveFound ) ;
     }
@@ -559,13 +548,20 @@ public class TombstoneCity {
         gameBoard.putBlank(curloc) ;
     }
 
-    boolean captureShip(List<Integer> montab, int index, int newmonloc)
+    /**
+     *
+     * @param monster monster capturing ship
+     * @param newmonloc
+     * @return true if captured
+     *         false ship is in safe area
+     */
+    boolean captureShip(Monster monster, int newmonloc)
     {
         boolean captured = false ;
         if (!isShipInSafeArea())
         {
-            monblk(montab.get(index), newmonloc) ;
-		    montab.set(index, newmonloc) ;
+            monblk(monster.getCurLocation(), newmonloc) ;
+            monster.setCurLocation(newmonloc);
             gulp() ;
             capture() ;
             captured = true  ;
@@ -789,7 +785,7 @@ public class TombstoneCity {
 
     void killMonster( Monster monster)
     {
-        System.out.println("killMonster "+monster.getClass().getName());
+        System.out.println("killMonster "+monster.getClass().getSimpleName());
 
         /*   generate explosion - graphic and sound       */
 //        bigsnd() ;

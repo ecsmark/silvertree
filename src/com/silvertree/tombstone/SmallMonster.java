@@ -6,6 +6,7 @@ import java.util.List;
 
 public class SmallMonster extends Monster{
     public final static int MAXSMALLMONSTERCOUNT = 20 ;
+    final static int POINTVALUE = 100 ;
 
     static List<Monster> SMontab ;
     public SmallMonster(int curLocation){
@@ -31,7 +32,7 @@ public class SmallMonster extends Monster{
 
     @Override
     public int getPointValue() {
-        return TombstoneCity.SPOINT;
+        return POINTVALUE;
     }
 
     static void createMontab(){

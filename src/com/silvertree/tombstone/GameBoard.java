@@ -41,6 +41,13 @@ public class GameBoard {
         blankScreen();
     }
 
+    static int row(int screenPosition){
+        return screenPosition / NUMBERCOLUMNS ;
+    }
+    static int column(int screenPostion){
+        return screenPostion % NUMBERCOLUMNS ;
+    }
+
     /**
      *
      */
