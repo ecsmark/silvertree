@@ -917,7 +917,7 @@ public class TombstoneCity {
             // ----------------------------------------------------------------
             if (gameBoard.getCharacter(Sprloc)  != Characters.Grave)
             { /* if location of sprite no longer contains a saguaro */
-                //gameBoard.Video()->Locate(0, (CGameBoard::MaxRow()+1)*8, 0) ;     /* turn off sprite      */
+                virtualTI.getVideo().locateSprite(0,(GameBoard.MAXROW+1)*8, 0) ;     /* turn off sprite      */
             }
         }
         else if (retry && adjcount == 2)
