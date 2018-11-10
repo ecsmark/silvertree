@@ -47,6 +47,7 @@ public class TIKeyboard implements ITIKeyboard {
             }
         });
 
+
         scene.setOnKeyPressed(new EventHandler<KeyEvent>() {
             @Override
             public void handle(KeyEvent event) {

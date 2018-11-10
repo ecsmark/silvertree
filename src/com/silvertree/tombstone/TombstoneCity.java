@@ -11,6 +11,7 @@ import javafx.event.EventHandler;
 import javafx.util.Duration;
 
 import java.util.Random;
+import java.util.logging.LogManager;
 
 public class TombstoneCity {
 
@@ -18,7 +19,7 @@ public class TombstoneCity {
     int   	m_nSpeed  ;
     int   	Score10  ;  	/* Score (10,000)          */
     int   	Score ;       	/* Score - digits 0-9999      */
-    int   	Schooners  ;
+    int   	Schooners = 9 ;
     int   	m_nShiploc ;	/* current ship location      */
     int   	m_nGencur =GameBoard.PLAYAREABG  ;	/* current Generator location   */
     int   	Sprloc  ;
@@ -168,9 +169,34 @@ public class TombstoneCity {
 
     int loopCount = 0 ;
     private void doGameLoop(){
-
+        if (checkForNewDay()){
+            playDay(++day);
+            return ;
+        }
+        if (timeToReleaseMoreMonsters()){
+            if (generateLargeMonsters() && SmallMonster.isEmpty())
+                genSmallMonsters(); ;
+        }
         moveSmallMonsters();
         moveLargeMonsters();
+    }
+
+    private boolean timeToReleaseMoreMonsters() {
+        return false ;
+    }
+
+    private boolean checkForNewDay() {
+        if  (LargeMonster.isEmpty()   && SmallMonster.getMonsters().size() < 10){
+            if (generateLargeMonsters()){
+                if (SmallMonster.isEmpty())
+                    genSmallMonsters();
+                return false ;
+            } else {
+                return true ;
+            }
+
+        }
+        return false ;
     }
 
     private void createGameloop() {

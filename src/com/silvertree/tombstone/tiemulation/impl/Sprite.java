@@ -65,10 +65,16 @@ public class Sprite {
     }
 
     public void display(GraphicsContext gc) {
+        if (y >= TIVideo.PIXELROWS)
+            return ;        // sprite disabled
+
         //System.out.println("Sprite.display at"+ x+","+y);
         gc.drawImage(spriteImage, x, y);
     }
     public void  move(){
+        if (y >= TIVideo.PIXELROWS)
+            return ;        // sprite disabled
+
         x += xvel ;
         y += yvel ;
         if (x >= TIVideo.PIXELCOLUMNS)

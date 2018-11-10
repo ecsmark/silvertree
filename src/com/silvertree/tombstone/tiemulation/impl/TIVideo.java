@@ -192,7 +192,6 @@ public class TIVideo implements ITIVideo {
     }
 
     private void initColorTable(){
-        byte[] colors ={0x1b,0x1b,0x1b,0x1b,0x1b,0x1b,0x1b,0x1b,0x6b,0x4b,(byte)0xcb,0x1b,0x1b,0x4b,(byte) 0xdb,0x47};
         for (int i=0; i < vdpRam.ColorTab.length; i++ )  {
             setColor(i, (byte)0x17) ;
         }
@@ -308,7 +307,7 @@ public class TIVideo implements ITIVideo {
 
     private WritableImage writePatternToImage(WritableImage wrImage, int nRow, int nCol, int patternNum, int foreGroundRGB, int backgroundRGB) {
         byte[] pattern = new byte[8] ;
-        for (int i =0 ; i < 8; i++){
+        for (int i =0 ; i < pattern.length; i++){
             pattern[i] = vdpRam.PatternTab[patternNum*8+i];
 
         }
