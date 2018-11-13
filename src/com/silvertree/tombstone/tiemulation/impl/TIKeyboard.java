@@ -16,16 +16,7 @@ public class TIKeyboard implements ITIKeyboard {
 
     @Override
     public TIKeycode scan() {
-        while (currentKey == null){
-            synchronized(this) {
-                try {
-                    this.wait(100L);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-        return  TIKeycode.BEGIN ;
+        throw new java.lang.UnsupportedOperationException();
     }
 
     @Override
