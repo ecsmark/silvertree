@@ -64,8 +64,12 @@ public class TIKeyboard implements ITIKeyboard {
             tiKeyCode = translateDigitKey(keyCode);
         }else if (keyCode.isLetterKey()){
             tiKeyCode = translateLetterKey(keyCode);
-        }else if (keyCode.isWhitespaceKey())
+        }else if (keyCode.isWhitespaceKey()) {
             tiKeyCode = translateWhitespaceKey(keyCode);
+        } else if (keyCode == KeyCode.ESCAPE){
+            tiKeyCode = TIKeycode.REDO ;
+        }
+
         LOGGER.info("translate("+keyCode.getName()+" to "+tiKeyCode.toString());
         return tiKeyCode;
     }
@@ -120,9 +124,25 @@ public class TIKeyboard implements ITIKeyboard {
         switch(keyCode)
         {
             case F1:
-                return TIKeycode.AID ;
+                return TIKeycode.DEL ;
+            case F2:
+                return TIKeycode.INS ;
+            case F3:
+                return TIKeycode.ERASE;
+            case F4:
+                return TIKeycode.CLEAR;
+            case F5:
+                return TIKeycode.BEGIN;
+            case F6:
+                return TIKeycode.PROCD;
+            case F7:
+                return TIKeycode.AID;
             case F8:
                 return TIKeycode.REDO;
+            case F9:
+                return TIKeycode.BACK;
+            case F11:
+                return TIKeycode.QUIT;
         }
         return TIKeycode.UNMAPPED ;
     }

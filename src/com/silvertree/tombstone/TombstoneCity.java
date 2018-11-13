@@ -88,6 +88,10 @@ public class TombstoneCity {
             case SPACE:
                 panic_key();
                 break;
+            case REDO:
+                gameEnd() ;
+                break;
+
 
         }
 
@@ -136,8 +140,10 @@ public class TombstoneCity {
 
         // -------- Start a new day --------------
         day = 0;
-        playDay(++day);
-        createGameloop() ;
+        Score = 0 ;
+
+        if (playDay(++day))
+            createGameloop() ;
         LOGGER.exiting(this.getClass().getName(), "gameBegin");
 
     }
@@ -165,7 +171,7 @@ public class TombstoneCity {
         List<Monster> smallMonsters = SmallMonster.getMonsters();
         smallMonsters.stream().forEach(m -> {int current = m.getCurLocation();
         if (gameBoard.getCharacter(current) != m.getCharacter(1) && gameBoard.getCharacter(current) != m.getCharacter(2))
-            System.err.println("Monster missing:"+m.toString());
+            GameLogging.error("Monster missing:"+m.toString());
         });
     }
 
@@ -210,11 +216,22 @@ public class TombstoneCity {
 
     void gameEnd()
     {
-
-//        createSprite() ;
-        virtualTI.getVideo().displayAt(11,4, "PRESS REDO OR BACK") ;
+        gameBoard.displayAt(11, 4,"PRESS REDO OR BACK");
         gameLoop.stop();
-//        while(m_pTI99->getKey() != TIKEYREDO) ;
+        virtualTI.getKeyboard().onKeyPressed(new TIKeyboardEventListener<ITIKeyboard.TIKeyboardEvent>() {
+            @Override
+            public void handle(TIEmulatorEvent event) {
+                handleGameEndKeys((ITIKeyboard.TIKeyboardEvent) event);
+            }
+        });
+    }
+
+    private void handleGameEndKeys(ITIKeyboard.TIKeyboardEvent event) {
+        if (event.getKeyCode() == ITIKeyboard.TIKeycode.REDO){
+            gameBegin();
+        } else if (event.getKeyCode() == ITIKeyboard.TIKeycode.BACK){
+            start() ;
+        }
     }
 
     void themeSong()
@@ -816,40 +833,42 @@ public class TombstoneCity {
 
     void killMonster( Monster monster)
     {
-        LOGGER.entering(this.getClass().getName(), "killMonster");
-        LOGGER.info("killMonster "+monster.toString());
+        GameLogging.getLogger().entering(this.getClass().getName(), "killMonster");
+        GameLogging.debug("killMonster "+monster.toString());
 
         /*   generate explosion - graphic and sound       */
 //        bigsnd() ;
 //        killtime(24000) ;
-
-        Characters replacementChar = monster.replaceCharacter();
-        gameBoard.writeChar(monster.getCurLocation(), replacementChar);
-
-        new AnimationTimer(){
-
-            long last = 0 ;
-
-            @Override
-            public void handle(long now) {
-                if (last == 0) {
-                    last = now;
-                    gameBoard.writeChar(monster.getCurLocation(), Characters.Explode) ;
-
-                }
-                else if (now - last > 1000L*1000L*240){
-                    gameBoard.writeChar(monster.getCurLocation(), monster.replaceCharacter());
-                    stop();
-                }
-            }
-        }.start() ;
 
         if (monster.removeFromMontab())
         {
             Score += monster.getPointValue() ;
         }
         gameBoard.displayScore(Score) ;
+        GameLogging.debug("creating Animation timer");
+        new AnimationTimer(){
 
+            long last = 0 ;
+
+            @Override
+            public void handle(long now) {
+
+                if (last == 0) {
+                    GameLogging.debug("animation timer first run");
+                    last = now;
+                    gameBoard.writeChar(monster.getCurLocation(), Characters.Explode) ;
+
+                }
+                else if (now - last > 1000L*1000L*240){
+                    GameLogging.debug("animation timer last run");
+                    gameBoard.writeChar(monster.getCurLocation(), monster.replaceCharacter());
+                    stop();
+                }
+            }
+        }.start() ;
+
+
+        GameLogging.debug("after starting animation timer");
         if (monster instanceof LargeMonster)
         {
             checkForAdjacentGraves(monster.getCurLocation(), false) ;
@@ -867,7 +886,7 @@ public class TombstoneCity {
             gameBoard.displaySchooners(Schooners) ;
             arbshp() ;
         }
-        LOGGER.exiting(this.getClass().getName(), "killMonster");
+        GameLogging.getLogger().exiting(this.getClass().getName(), "killMonster");
     }
 
     /**
@@ -974,7 +993,7 @@ public class TombstoneCity {
             {
                 m_nShiploc = GameBoard.INITSHIPLOC;
                 gameBoard.writeChar(m_nShiploc, Ship) ;
-                keydep() ;
+                GameLogging.debug("ship captured and returned to "+m_nShiploc);
             }
         }
     }

@@ -48,4 +48,7 @@ public class GameLogging {
     public static void warning(String message){
         LOGGER.log(Level.WARNING, message);
     }
+    public static void error(String message){
+        LOGGER.log(Level.SEVERE, message);
+    }
 }
