@@ -1,13 +1,12 @@
 package com.silvertree.tombstone.tiemulation.impl;
 
-import com.silvertree.tombstone.tiemulation.ITIVideo;
-import javafx.embed.swing.SwingFXUtils;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.image.Image;
 
-import java.awt.image.*;
-
 public class Sprite {
+    public final static int SPRITEWIDTH = 8 ;
+    public final static int SPRITEHEIGHT = 8 ;
+
 
     Image spriteImage ;
     int x ;
@@ -64,12 +63,12 @@ public class Sprite {
         this.yvel = yvel;
     }
 
-    public void display(GraphicsContext gc) {
+    public void display(GraphicsContext gc, double scaleFactor) {
         if (y >= TIVideo.PIXELROWS)
             return ;        // sprite disabled
 
         //System.out.println("Sprite.display at"+ x+","+y);
-        gc.drawImage(spriteImage, x, y);
+        gc.drawImage(spriteImage, x*scaleFactor, y*scaleFactor, SPRITEWIDTH*scaleFactor, SPRITEHEIGHT*scaleFactor);
     }
     public void  move(){
         if (y >= TIVideo.PIXELROWS)

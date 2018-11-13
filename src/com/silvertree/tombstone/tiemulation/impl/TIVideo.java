@@ -27,17 +27,19 @@ import java.util.logging.Logger;
 public class TIVideo implements ITIVideo {
     final static int COLUMNS = 32;
     final static int ROWS =	 24;
-    final static int SPRITEWIDTH = 8 ;
-    final static int SPRITEHEIGHT = 8 ;
     final static int XSCREENOFFSET = 0;
     final static int YSCREENOFFSET	= 0 ;
     final static int PIXELCOLUMNS = COLUMNS * 8 ;
     final static int PIXELROWS = ROWS * 8 ;
+    final static int MAX_SPRITES = 16 ;
+    final static int NUM_COLORS = 16 ;
 
     VDPRam vdpRam = new VDPRam() ;
     WritableImage frameBuffer ;
 
-   Sprite[] sprites = new Sprite[16] ;
+    private double scaleFactor = 1.0 ;
+
+   Sprite[] sprites = new Sprite[MAX_SPRITES] ;
 
     final int[] TI_PALETTE = {	0x00ffffff,		// 0 = transparent
                                 0xff000000,	    // 1= Black
@@ -61,9 +63,11 @@ public class TIVideo implements ITIVideo {
     GraphicsContext gc ;
     Timeline refreshLoop ;
 
-    public TIVideo(Pane pane ){
+    public TIVideo(Pane pane , double scaleFactor){
         this.pane = pane ;
-        Canvas canvas = new Canvas(PIXELCOLUMNS, PIXELROWS);
+        this.scaleFactor = scaleFactor ;
+
+        Canvas canvas = new Canvas(PIXELCOLUMNS*scaleFactor, PIXELROWS*scaleFactor);
         pane.getChildren().add(canvas);
         gc=  canvas.getGraphicsContext2D();
         initPATTAB();
@@ -114,15 +118,16 @@ public class TIVideo implements ITIVideo {
         return new javafx.scene.image.Image(in);
     }
     private IndexColorModel getDefaultColorModel() {
-        byte[] r = new byte[16];
-        byte[] g = new byte[16] ;
-        byte[] b = new byte[16] ;
+        final int BITS_PER_COLOR  = 4;
+        byte[] r = new byte[NUM_COLORS];
+        byte[] g = new byte[NUM_COLORS] ;
+        byte[] b = new byte[NUM_COLORS] ;
         for (int i=0 ; i < r.length; i++){
             r[i] = (byte) ((TI_PALETTE[i] >> 16) & 0xff) ;
             g[i] = (byte) ((TI_PALETTE[i] >> 8) & 0xff) ;
             b[i] = (byte) (TI_PALETTE[i]  & 0xff);
         }
-        return new IndexColorModel(4, 16, r, g, b);
+        return new IndexColorModel(BITS_PER_COLOR, NUM_COLORS, r, g, b);
     }
 
     private SampleModel getIndexSampleModel(int width, int height) {
@@ -152,14 +157,13 @@ public class TIVideo implements ITIVideo {
 
         redrawScreen(rect);
         drawSprites() ;
-        //updateScreen() ;
     }
 
     private void drawSprites() {
         for (Sprite sprite : sprites){
             if (sprite != null) {
                 sprite.move();
-                sprite.display(gc);
+                sprite.display(gc, scaleFactor);
             }
         }
     }
@@ -170,7 +174,7 @@ public class TIVideo implements ITIVideo {
     }
 
     private void updateScreen(Rectangle rect) {
-        gc.drawImage(frameBuffer, 0,0);
+        gc.drawImage(frameBuffer, 0,0, PIXELCOLUMNS*scaleFactor, PIXELROWS*scaleFactor);
 
     }
 
@@ -178,7 +182,7 @@ public class TIVideo implements ITIVideo {
     public void sprite(int spritenum, int patternNum, int color, int y, int x, int yvelocity, int xvelocity) {
         int foreGroundColor = TI_PALETTE[color];
         int backGroundColor = 0 ;       // transparent
-        WritableImage wrImage = new WritableImage(8, 8);
+        WritableImage wrImage = new WritableImage(Sprite.SPRITEWIDTH, Sprite.SPRITEHEIGHT);
         Sprite sprite = new Sprite(writePatternToImage(wrImage, 0, 0, patternNum,  foreGroundColor, backGroundColor), x, y, xvelocity, yvelocity);
         sprites[spritenum] =  sprite;
     }
@@ -346,7 +350,7 @@ public class TIVideo implements ITIVideo {
     @Override
     public void displaySprite(int spriteNum) {
         if (sprites[spriteNum] != null){
-            sprites[spriteNum].display(gc);
+            sprites[spriteNum].display(gc, scaleFactor);
         }
 
     }

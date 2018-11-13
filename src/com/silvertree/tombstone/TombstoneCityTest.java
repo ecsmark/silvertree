@@ -195,7 +195,7 @@ public class TombstoneCityTest {
         ITIKeyboard keyboard ;
 
         public MockVirtualTI(){
-            video = new TIVideo(new Pane());
+            video = new TIVideo(new Pane(), 2.0);
 
         }
         @Override

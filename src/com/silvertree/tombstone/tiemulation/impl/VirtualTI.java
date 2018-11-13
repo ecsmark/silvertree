@@ -13,9 +13,9 @@ public class VirtualTI implements IVirtualTI {
     ITIKeyboard keyboard ;
     Pane pane ;
 
-    public VirtualTI(Scene scene, Pane pane){
+    public VirtualTI(Scene scene, Pane pane, double scaleFactor){
         this.pane = pane ;
-        createVideo(pane) ;
+        createVideo(pane, scaleFactor) ;
         createKeyboard(scene);
     }
     @Override
@@ -28,8 +28,8 @@ public class VirtualTI implements IVirtualTI {
         return keyboard ;
     }
 
-    ITIVideo createVideo(Pane pane){
-        video = new TIVideo(pane);
+    ITIVideo createVideo(Pane pane, double scaleFactor){
+        video = new TIVideo(pane, scaleFactor);
         return video ;
     }
     ITIKeyboard createKeyboard(Scene scene){
