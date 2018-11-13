@@ -106,9 +106,14 @@ public class GameBoard {
     }
 
     public void displayAt(int row, int col, Characters[] characters){
+        int columnIndex = col;
         for(Characters character: characters)   {
-            writeChar(row, col++, character);
+            writeChar(row, columnIndex++, character);
         }
+    }
+
+    public void displayAt(int row, int col, String str){
+        tiVideo.displayAt(row, col, str);
     }
 
     public void writeChar(int row, int col, Characters chr){
@@ -129,11 +134,11 @@ public class GameBoard {
 
     public void preGameScreen()
     {
-        final int outl1[] = new int[]{138, 138, 136, 93, 32, 32,
+        final int line1[] = new int[]{138, 138, 136, 93, 32, 32,
                 32,129,121,126,132,123,129,121,127,131,32,120,
                 130,129,122,32,32,32,137,138,138,138} ;
 
-        final int outl2[] = new int[] {138,138,138,138,138,139,
+        final int line2[] = new int[] {138,138,138,138,138,139,
                 140,130,122,124,122,128,130,122,124,125,133,125,
                 130,130,130,141,142,138,138,138,138,138} ;
 
@@ -141,8 +146,8 @@ public class GameBoard {
         writeChar(0,2, 136) ;       /* write Mountain char    */
         writeChar(0,29,137) ;
         writeChar(0,27, Characters.Grave) ;
-        tiVideo.displayAt(1,2, outl1);
-        tiVideo.displayAt(2,2, outl2) ;
+        tiVideo.displayAt(1,2, line1);
+        tiVideo.displayAt(2,2, line2) ;
 
 
     }
