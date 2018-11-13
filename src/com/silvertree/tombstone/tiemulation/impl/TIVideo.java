@@ -1,7 +1,6 @@
 package com.silvertree.tombstone.tiemulation.impl;
 
 import com.silvertree.tombstone.tiemulation.ITIVideo;
-import com.silvertree.tombstone.tiemulation.TIAddress;
 import javafx.animation.Animation;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
@@ -24,13 +23,15 @@ import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+/**
+ *  implements an emulation of TI video sufficient to support
+ *  the game Tombstone City.
+ */
 public class TIVideo implements ITIVideo {
-    final static int COLUMNS = 32;
-    final static int ROWS =	 24;
     final static int XSCREENOFFSET = 0;
     final static int YSCREENOFFSET	= 0 ;
-    final static int PIXELCOLUMNS = COLUMNS * 8 ;
-    final static int PIXELROWS = ROWS * 8 ;
+    final static int PIXELCOLUMNS = NumColums * 8 ;
+    final static int PIXELROWS = NumRows * 8 ;
     final static int MAX_SPRITES = 16 ;
     final static int NUM_COLORS = 16 ;
 
@@ -63,6 +64,11 @@ public class TIVideo implements ITIVideo {
     GraphicsContext gc ;
     Timeline refreshLoop ;
 
+    /**
+     *
+     * @param pane emulated video will be created in this pane
+     * @param scaleFactor  amount the TI video should be scaled.
+     */
     public TIVideo(Pane pane , double scaleFactor){
         this.pane = pane ;
         this.scaleFactor = scaleFactor ;
@@ -170,7 +176,6 @@ public class TIVideo implements ITIVideo {
 
     public void redrawScreen(Rectangle rect){
         updateScreen(rect);
-//        moveAllSprites() ;
     }
 
     private void updateScreen(Rectangle rect) {
@@ -299,8 +304,8 @@ public class TIVideo implements ITIVideo {
     @Override
     public void wrChar(int nRow, int nCol, int  val) {
 
-        if (nRow < ROWS && nCol < COLUMNS) {
-            vdpRam.ScreenImage[nRow * COLUMNS + nCol] = (byte) val;
+        if (nRow < NumRows && nCol < NumColums) {
+            vdpRam.ScreenImage[nRow * NumColums + nCol] = (byte) val;
             byte bColor = vdpRam.ColorTab[val/8];
             int foreGroundColor = (bColor >> 4) & 0x0f;
             int backGroundColor = bColor & 0x0f ;
