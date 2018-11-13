@@ -2,12 +2,15 @@ package com.silvertree.tombstone.tiemulation.impl;
 
 import com.silvertree.tombstone.tiemulation.ITIKeyboard;
 import com.silvertree.tombstone.tiemulation.TIKeyboardEventListener;
+import java.util.logging.Logger ;
+
 import javafx.event.EventHandler;
 import javafx.scene.Scene;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 
 public class TIKeyboard implements ITIKeyboard {
+    final static Logger LOGGER = Logger.getLogger(TIKeyboard.class.getName());
 
     private TIKeyboardEventListener<? super TIKeyboardEvent> onKeyPressedEventHandler;
 
@@ -51,10 +54,10 @@ public class TIKeyboard implements ITIKeyboard {
         scene.setOnKeyPressed(new EventHandler<KeyEvent>() {
             @Override
             public void handle(KeyEvent event) {
-                System.out.println("keyPressed event:"+event.getText());
+                LOGGER.info("keyPressed event:"+event.getText());
                 currentKey = event.getCode() ;
                 if (onKeyPressedEventHandler != null){
-                    System.out.println("calling event handler ");
+                    LOGGER.info("calling event handler ");
                     onKeyPressedEventHandler.handle(new TIKeyboardEvent(translate(event.getCode())));
                 }
             }
@@ -72,7 +75,7 @@ public class TIKeyboard implements ITIKeyboard {
             tiKeyCode = translateLetterKey(keyCode);
         }else if (keyCode.isWhitespaceKey())
             tiKeyCode = translateWhitespaceKey(keyCode);
-        System.out.println("translate("+keyCode.getName()+" to "+tiKeyCode.toString());
+        LOGGER.info("translate("+keyCode.getName()+" to "+tiKeyCode.toString());
         return tiKeyCode;
     }
 

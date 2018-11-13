@@ -7,8 +7,11 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.logging.Logger;
 
 public class GameBoard {
+    final static Logger LOGGER = Logger.getLogger(GameBoard.class.getName());
+
     final static  Rectangle s_rectSafeArea = new Rectangle(12, 8, 19 , 13  );
 
     public final static int NUMBERROWS = 24 ;
@@ -338,7 +341,7 @@ public class GameBoard {
             blank_loc =  randomPlayAreaLocation() ;
             tryCount++ ;
         } while (tiVideo.getChar(blank_loc) != ' ') ;
-        System.out.println("RandomBlank tryCount ="+tryCount);
+        LOGGER.info("RandomBlank tryCount ="+tryCount);
         return(blank_loc) ;
     }
     private void initColors(){

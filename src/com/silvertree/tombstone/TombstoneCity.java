@@ -2,16 +2,14 @@ package com.silvertree.tombstone;
 
 import com.silvertree.tombstone.tiemulation.*;
 import com.silvertree.tombstone.tiemulation.impl.TIKeyboard;
-import javafx.animation.Animation;
-import javafx.animation.AnimationTimer;
-import javafx.animation.KeyFrame;
-import javafx.animation.Timeline;
+import javafx.animation.*;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.util.Duration;
 
-import java.util.Random;
-import java.util.logging.LogManager;
+import java.io.IOException;
+import java.util.List;
+import java.util.logging.*;
 
 public class TombstoneCity {
 
@@ -38,9 +36,11 @@ public class TombstoneCity {
     static final TIKeyboard.TIKeycode FIREKEY = TIKeyboard.TIKeycode.Q ;
     Timeline gameLoop ;
 
+    private final static Logger LOGGER = Logger.getLogger("InfoLogger");
+
     public TombstoneCity(IVirtualTI pTI99) {
         virtualTI = pTI99;
-
+        setupLogging(); ;
         Score10 = 0;      // Score (10,000)
         Score = 0;       // Score - digits 0-9999
         Schooners = 0;
@@ -60,6 +60,38 @@ public class TombstoneCity {
         Score = -1000;
         Schooners = 9;
     }
+
+    private void setupLogging(){
+        try {
+            FileHandler fileHandler = new FileHandler("tombstonecity.log");
+            Formatter formatter = new Formatter() {
+                @Override
+                public String format(LogRecord record) {
+                    StringBuffer buffer = new StringBuffer();
+                    buffer.append(record.getMillis());
+                    buffer.append(",");
+                    buffer.append(record.getLoggerName());
+                    buffer.append(",");
+                    buffer.append(record.getLevel().getName());
+                    buffer.append(",[");
+                    buffer.append(Thread.currentThread().getName());
+                    buffer.append("],");
+                    buffer.append(record.getMessage());
+                    buffer.append("\r\n") ;
+                    return buffer.toString();
+
+                }
+            };
+
+            fileHandler.setFormatter(formatter);
+            LOGGER.addHandler(fileHandler);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+
+    }
+
     public void start(){
         dispLevelMenu();
 
@@ -67,7 +99,7 @@ public class TombstoneCity {
     }
 
     private void handleGamePlayKeys(ITIKeyboard.TIKeyboardEvent event) {
-        System.out.println("handleGamePlayKeys "+event.getKeyCode());
+        LOGGER.info("handleGamePlayKeys "+event.getKeyCode());
         switch(event.getKeyCode()){
             case RIGHT:
                 movshp(Characters.ShipRight, 1);
@@ -88,35 +120,6 @@ public class TombstoneCity {
                 panic_key();
                 break;
 
-//            case 0:
-//            {
-//                int x ;
-//                int y ;
-//                bool fireButton ;
-//                m_pTI99->checkJoy(x, y, fireButton) ;
-//                if (fireButton)
-//                {
-//                    fire() ;
-//                }
-//                else if (x > 0 )
-//                {
-//                    movshp(SHIPRT, 1);
-//                    Msg("got an x > 0") ;
-//                }
-//                else if (x < 0 )
-//                {
-//                    movshp(Characters.ShipLeft, -1);
-//                    Msg("got an x < 0") ;
-//                }
-//                else if (y < 0)
-//                {
-//                    movshp(Characters.ShipUp, -32);
-//                }
-//                else if (y > 0 )
-//                {
-//                    movshp(Characters.ShipDown, 32);
-//                }
-//            }
         }
 
     }
@@ -128,7 +131,7 @@ public class TombstoneCity {
      */
     public boolean playDay(int day)
     {
-        System.out.println("playDay");
+        LOGGER.info("playDay "+day);
 
         boolean bEndGame = false ;
         boolean bDoneWithDay = false ;
@@ -152,7 +155,8 @@ public class TombstoneCity {
     }
     void gameBegin(){
 
-        System.out.println("gameBegin");
+        LOGGER.entering(this.getClass().getName(), "gameBegin");
+        LOGGER.info("gameBegin");
         virtualTI.getKeyboard().onKeyPressed(new TIKeyboardEventListener<ITIKeyboard.TIKeyboardEvent>() {
             @Override
             public void handle(TIEmulatorEvent event) {
@@ -164,21 +168,35 @@ public class TombstoneCity {
         day = 0;
         playDay(++day);
         createGameloop() ;
+        LOGGER.exiting(this.getClass().getName(), "gameBegin");
 
     }
 
     int loopCount = 0 ;
     private void doGameLoop(){
+        LOGGER.info("gameLoop begin");
         if (checkForNewDay()){
             playDay(++day);
             return ;
         }
         if (timeToReleaseMoreMonsters()){
-            if (generateLargeMonsters() && SmallMonster.isEmpty())
-                genSmallMonsters(); ;
+            if (generateLargeMonsters() && SmallMonster.isEmpty()) {
+                LOGGER.info("generating more small monsters in gameLoop");
+                genSmallMonsters();
+            }
         }
         moveSmallMonsters();
         moveLargeMonsters();
+        verifyMonsterTables() ;
+        LOGGER.info("gameLoop end");
+    }
+
+    private void verifyMonsterTables() {
+        List<Monster> smallMonsters = SmallMonster.getMonsters();
+        smallMonsters.stream().forEach(m -> {int current = m.getCurLocation();
+        if (gameBoard.getCharacter(current) != m.getCharacter(1) && gameBoard.getCharacter(current) != m.getCharacter(2))
+            System.err.println("Monster missing:"+m.toString());
+        });
     }
 
     private boolean timeToReleaseMoreMonsters() {
@@ -244,7 +262,7 @@ public class TombstoneCity {
      */
     void genSmallMonsters()
     {
-        System.out.println("genSmallMonsters");
+        LOGGER.info("genSmallMonsters");
         for (int i=0; i< SmallMonster.MAXSMALLMONSTERCOUNT; i++)
         {
             int  screen_loc ;
@@ -270,7 +288,7 @@ public class TombstoneCity {
     /**
      *  last location checked
      */
-    private int     Genlas ;
+    private Generator lastGenerator ;
     /**
      * screen location to release new monster
      */
@@ -282,92 +300,95 @@ public class TombstoneCity {
      */
     boolean generateLargeMonsters()
     {
-        System.out.println("genarateLargeMonsters");
+        LOGGER.info("genarateLargeMonsters");
 
-        boolean	generatorFound = false ;  	/*  flag set if generator encountered.  */
-        boolean	releasePointFound = false ; /*  flag set if able to release monster */
+        Generator generator = findGenerator() ;
+        if (generator != null){
+            releaseMonster(generator);
+        }
+        return(generator != null) ;
+    }
 
-        gameBoard.safeAreaBlueOnLightBlue() ;     /* safe area blue on light blue */
-        Genlas = m_nGencur ;
-        int save = m_nGencur ;
+    /**
+     *
+     * @return next generator found, null if none.
+     */
+    Generator findGenerator() {
+        boolean generatorFound = false;    //  flag set if generator encountered.
+        boolean releasePointFound = false; //  flag set if able to release monster
 
+        gameBoard.safeAreaBlueOnLightBlue();     // safe area blue on light blue
+        int Genlas = m_nGencur;
 
-        while (++m_nGencur != Genlas && !(generatorFound && releasePointFound))
-        {
-            if (m_nGencur >= GameBoard.PLAYAREAEND)
-            {
-                m_nGencur = GameBoard.PLAYAREABG ;
-                ++Genlas ;
-                if (Genlas >  GameBoard.PLAYAREAEND)
-                    Genlas = GameBoard.PLAYAREAEND ;
+        while (++m_nGencur != Genlas && !(generatorFound && releasePointFound)) {
+            if (m_nGencur >= GameBoard.PLAYAREAEND) {
+                m_nGencur = GameBoard.PLAYAREABG;
+                ++Genlas;
+                if (Genlas > GameBoard.PLAYAREAEND)
+                    Genlas = GameBoard.PLAYAREAEND;
             }
 
-            Characters  c  = gameBoard.getCharacter(m_nGencur) ;
-            if (c == Characters.Grave)
-            {
+            Characters c = gameBoard.getCharacter(m_nGencur);
+            if (c == Characters.Grave) {
                 /* ------------------------------------------------------------ */
                 /* found a Saguaro -> if another one adjacent then we have      */
                 /* a generator               									*/
                 /* ------------------------------------------------------------ */
-                for (int i=0 ; i< 8; i++)
-                {
-                    c = gameBoard.getCharacter(m_nGencur+gameBoard.neighbor(i)) ;
+                for (int i = 0; i < 8; i++) {
+                    c = gameBoard.getCharacter(m_nGencur + gameBoard.neighbor(i));
                     if (c == Characters.Grave)
-                        generatorFound = true ;    /* found a generator         */
-                    else if (c == Characters.Blank)
-                    {       /* found Monster release position   */
-                        releasePointFound = true  ;
-                        Genrel = m_nGencur+gameBoard.neighbor(i) ;
+                        generatorFound = true;    /* found a generator         */
+                    else if (c == Characters.Blank) {       /* found Monster release position   */
+                        releasePointFound = true;
+                        Genrel = m_nGencur + gameBoard.neighbor(i);
                     }
 
                 }
 
                 /*   Did we find a generator yet ?              */
-                if (generatorFound && releasePointFound)
-                {
-                    /* put up sprite at generator     */
-                    Sprloc = m_nGencur ;
-                    int y = GameBoard.row(m_nGencur ) * 8;
-                    int x = GameBoard.column(m_nGencur) * 8 ;
-
-                    virtualTI.getVideo().locateSprite(0, y, x);
-                    //gameBoard.Video()->Locate(0, GameBoard.row(m_nGencur)*8,GameBoard.column(m_nGencur)*8) ;
-
-                    if (Sprflg != 1)
-                    { /* release Large monster    */
-                        releaseMonster(Genrel) ;
-                    }
-                    else
-                    {
-                        Sprflg = 0 ;  /* reset sprite flag */
-                        m_nGencur = save ;
-                    }
-                    break ;
+                if (generatorFound && releasePointFound) {
+                    return new Generator(m_nGencur, Genrel);
                 }
             }
+
         }
-        return(generatorFound) ;
+        return null;
     }
 
-    void releaseMonster(int loc)
+    void releaseMonster(Generator generator)
     {
 
         // put up sprite at generator 
-        Sprloc = m_nGencur ;
-        int y = GameBoard.row(m_nGencur )*8;
-        int x =  GameBoard.column(m_nGencur )*8;
+        Sprloc = generator.getGeneratorLocation() ;
+        int y = GameBoard.row(generator.getGeneratorLocation())*8;
+        int x =  GameBoard.column(generator.getGeneratorLocation() )*8;
 
-        virtualTI.getVideo().locateSprite(0, y, x) ;
 
         // release Large monster
         if (!LargeMonster.isFull())
         {
-            gameBoard.writeChar(loc, Characters.Large2) ;
-            ++m_nGencur ;
-            Monster monster = new LargeMonster(loc);
-            monster.addToMontab();
+            virtualTI.getVideo().locateSprite(0, y, x) ;
+
+
+            new AnimationTimer(){
+                long start = 0 ;
+                @Override
+                public void handle(long now) {
+                    if (start == 0) start = now ;
+
+                    if (Duration.millis((now - start)/(1000*1000)).greaterThanOrEqualTo(Duration.millis(1500.0))){
+                        gameBoard.writeChar(generator.getReleasePoint(), Characters.Large2) ;
+                        ++m_nGencur ;
+                        Monster monster = new LargeMonster(generator.getReleasePoint());
+                        monster.addToMontab();
+                        LOGGER.info("releaseMonster at "+ monster.getCurLocation()+ " from generator at "+Sprloc);
+                        gameBoard.safeAreaBlueOnBlue() ;
+                        this.stop() ;
+
+                    }
+                }
+            }.start() ;
         }
-        gameBoard.safeAreaBlueOnBlue() ;
     }
 
 
@@ -385,7 +406,7 @@ public class TombstoneCity {
     // -----------------------------------------------------------------------
     boolean movshp(Characters shipCharacter, int offset)
     {
-        System.out.println("movshp("+shipCharacter+","+offset+")");
+        LOGGER.info("movshp("+shipCharacter+","+offset+")");
         int     newshiploc ;
 
         if (shipCharacter != Ship)	/* check to see if orientation changes	    */
@@ -416,19 +437,19 @@ public class TombstoneCity {
      */
     void moveSmallMonsters()
     {
-        System.out.println("move small monsters");
-        int     newmonloc ;
+        LOGGER.info("move small monsters");
+        int     newmonloc =0;
 
         if (!SmallMonster.isEmpty())
         {
 
-            int shiprow = m_nShiploc /GameBoard.NUMBERCOLUMNS ;
-            int shipcol = m_nShiploc % GameBoard.NUMBERCOLUMNS;
+            int shiprow = GameBoard.row(m_nShiploc) ;
+            int shipcol = GameBoard.column(m_nShiploc );
             for(Monster monster : SmallMonster.getMonsters())
             {
                 int monsterPosition = monster.getCurLocation();
-                int monrow = monsterPosition/GameBoard.NUMBERCOLUMNS ;
-                int moncol = monsterPosition % GameBoard.NUMBERCOLUMNS ;;
+                int monrow = GameBoard.row(monsterPosition) ;
+                int moncol = GameBoard.column(monsterPosition);
                 if (shiprow == monrow)
                 { /* on same row */
                     newmonloc =monsterPosition;
@@ -440,8 +461,9 @@ public class TombstoneCity {
                     Characters c = gameBoard.getCharacter(newmonloc);
                     if (c == Characters.Blank)
                     {
-                        monblk(monsterPosition, newmonloc) ;
                         monster.setCurLocation(newmonloc);
+                        monblk(monsterPosition, newmonloc) ;
+                        LOGGER.info("moveSmallMonster from "+monsterPosition+" to "+newmonloc);
                         continue ;
                     }
                 }
@@ -456,14 +478,16 @@ public class TombstoneCity {
                     Characters c = gameBoard.getCharacter(newmonloc);
                     if (c == Characters.Blank)
                     {
-                        monblk(monsterPosition, newmonloc);
                         monster.setCurLocation(newmonloc);
+                        monblk(monsterPosition, newmonloc);
+                        LOGGER.info("moveSmallMonster from "+monsterPosition+" to "+newmonloc);
                         continue ;
                     }
 
                 }
             }
         }
+        LOGGER.info("-- moveSmallMonsters end --");
     }
 
 
@@ -472,7 +496,7 @@ public class TombstoneCity {
      */
     void moveLargeMonsters()
     {
-        System.out.println("moveLargeMonsters");
+        LOGGER.info("moveLargeMonsters");
         int     newmonloc ;
         int     moveflg = 0;
 
@@ -530,11 +554,11 @@ public class TombstoneCity {
                 else
                     newmonloc-=32 ;
 
-                tryMove(monster, newmonloc) ;
+                tryMove(monster, newmonloc);
 
             }
         }
-        System.out.println("-- moveLargeMonsters end --");
+        LOGGER.info("-- moveLargeMonsters end --");
     }
 
     /**
@@ -545,11 +569,12 @@ public class TombstoneCity {
      */
     boolean tryMove ( Monster monster, int newmonloc)
     {
-        System.out.println("tryMove("+monster.toString()+", "+newmonloc+")");
+        LOGGER.info("tryMove("+monster.toString()+", "+newmonloc+")");
         boolean moveFound = false ;
         Characters c = gameBoard.getCharacter(newmonloc);
         if (c == Characters.Blank)
         {
+            LOGGER.info("move "+monster.toString()+" to "+newmonloc);
             monblk(monster.getCurLocation(), newmonloc) ;
             monster.setCurLocation(newmonloc);
             moveFound =  true  ;
@@ -574,7 +599,12 @@ public class TombstoneCity {
             newChar = Characters.Large1 ;
         else if (monchar == Characters.Small1)
             newChar = Characters.Small2 ;
-
+        else if (monchar == Characters.Small2)
+            newChar = Characters.Small1 ;
+        else {
+            LOGGER.info("monblk " + monchar.name() + " set to " + newChar.name());
+            return ;
+        }
         gameBoard.writeChar(newloc, newChar) ;
         gameBoard.putBlank(curloc) ;
     }
@@ -588,7 +618,7 @@ public class TombstoneCity {
      */
     boolean captureShip(Monster monster, int newmonloc)
     {
-        System.out.println("captureShip("+monster.toString()+", "+newmonloc+")");
+        LOGGER.info("captureShip("+monster.toString()+", "+newmonloc+")");
         boolean captured = false ;
         if (!isShipInSafeArea())
         {
@@ -734,7 +764,7 @@ public class TombstoneCity {
      */
     void fire()
     {
-        System.out.println("fire") ;
+        LOGGER.info("fire") ;
 
         Characters    bullet = Characters.BulletHorizontal;
         int     bulletmoveicr =0;
@@ -801,7 +831,7 @@ public class TombstoneCity {
                     gameBoard.writeChar(newloc, bullet) ;
                 } else
                 {
-                    System.out.println("stopping bullet animator");
+                    LOGGER.info("stopping bullet animator");
                     stop() ;
                 }
                 lastTime = currentNanoTime ;
@@ -811,13 +841,14 @@ public class TombstoneCity {
 
         new BulletAnimator(bullet, bulletmoveicr).start() ;
 
-        System.out.println("-- fire() end --");
+        LOGGER.info("-- fire() end --");
     }
 
 
     void killMonster( Monster monster)
     {
-        System.out.println("killMonster "+monster.getClass().getSimpleName());
+        LOGGER.entering(this.getClass().getName(), "killMonster");
+        LOGGER.info("killMonster "+monster.toString());
 
         /*   generate explosion - graphic and sound       */
 //        bigsnd() ;
@@ -867,6 +898,7 @@ public class TombstoneCity {
             gameBoard.displaySchooners(Schooners) ;
             arbshp() ;
         }
+        LOGGER.exiting(this.getClass().getName(), "killMonster");
     }
 
     /**
@@ -988,7 +1020,7 @@ public class TombstoneCity {
      */
     void arbshp()
     {
-        System.out.println("arbshp()");
+        LOGGER.info("arbshp()");
         int     screen_loc ;
         boolean     found = false;
 
@@ -1060,7 +1092,7 @@ public class TombstoneCity {
     }
 
     private void handleDisplayLevelMenuSelection(TIEmulatorEvent event) {
-        System.out.println("handleDisplayLevelMenuSelection event="+((ITIKeyboard.TIKeyboardEvent)event).getKeyCode().toString());
+        LOGGER.info("handleDisplayLevelMenuSelection event="+((ITIKeyboard.TIKeyboardEvent)event).getKeyCode().toString());
         switch(((ITIKeyboard.TIKeyboardEvent)event).getKeyCode()){
             case AID:
                 displayHelpMenu();
@@ -1095,7 +1127,7 @@ public class TombstoneCity {
     }
 
     private void handleHelpMenuReturn(TIEmulatorEvent event) {
-        System.out.println("handleHelpMenuReturn");
+        LOGGER.info("handleHelpMenuReturn");
         dispLevelMenu();
     }
 }

@@ -1,12 +1,8 @@
 package com.silvertree.tombstone;
 
 import com.silvertree.tombstone.tiemulation.IVirtualTI;
-import com.silvertree.tombstone.tiemulation.impl.TIKeyboard;
 import com.silvertree.tombstone.tiemulation.impl.VirtualTI;
 import javafx.application.Application;
-import javafx.fxml.FXMLLoader;
-import javafx.scene.Group;
-import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
