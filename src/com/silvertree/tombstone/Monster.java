@@ -2,8 +2,6 @@ package com.silvertree.tombstone;
 
 import java.util.Iterator;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 public abstract class Monster {
     public int getCurLocation() {
@@ -20,8 +18,6 @@ public abstract class Monster {
     public abstract Characters replaceCharacter();
     public abstract int getPointValue() ;
 
-    static final Logger LOGGER = Logger.getLogger("InfoLogging");
-
     public void addToMontab(){
         getMontab().add(this);
     }
@@ -34,7 +30,7 @@ public abstract class Monster {
                 return true ;
             }
         }
-        LOGGER.log(Level.WARNING, "removeFromMontab: did not find Monster "+this.toString()+" in Montab");
+        GameLogging.warning( "removeFromMontab: did not find Monster "+this.toString()+" in Montab");
         return false ;
     }
 

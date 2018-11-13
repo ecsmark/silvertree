@@ -5,10 +5,7 @@ import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Date;
-import java.util.logging.FileHandler;
-import java.util.logging.Formatter;
-import java.util.logging.LogRecord;
-import java.util.logging.Logger;
+import java.util.logging.*;
 
 public class GameLogging {
     private static DateTimeFormatter timeFormatter = DateTimeFormatter.ISO_LOCAL_TIME;
@@ -47,5 +44,8 @@ public class GameLogging {
 
     public static void debug(String message){
         LOGGER.info(message);
+    }
+    public static void warning(String message){
+        LOGGER.log(Level.WARNING, message);
     }
 }
