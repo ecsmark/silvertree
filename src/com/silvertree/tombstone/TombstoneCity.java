@@ -7,13 +7,13 @@ import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.util.Duration;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.logging.*;
 
 public class TombstoneCity {
 
     int   	m_nLevFlg  ;
+    int     timeFlg = 0 ;
     int   	m_nSpeed  ;
     int   	Score10  ;  	/* Score (10,000)          */
     int   	Score ;       	/* Score - digits 0-9999      */
@@ -36,11 +36,10 @@ public class TombstoneCity {
     static final TIKeyboard.TIKeycode FIREKEY = TIKeyboard.TIKeycode.Q ;
     Timeline gameLoop ;
 
-    private final static Logger LOGGER = Logger.getLogger("InfoLogger");
+    private final static Logger LOGGER = GameLogging.setup();
 
     public TombstoneCity(IVirtualTI pTI99) {
         virtualTI = pTI99;
-        setupLogging(); ;
         Score10 = 0;      // Score (10,000)
         Score = 0;       // Score - digits 0-9999
         Schooners = 0;
@@ -61,36 +60,6 @@ public class TombstoneCity {
         Schooners = 9;
     }
 
-    private void setupLogging(){
-        try {
-            FileHandler fileHandler = new FileHandler("tombstonecity.log");
-            Formatter formatter = new Formatter() {
-                @Override
-                public String format(LogRecord record) {
-                    StringBuffer buffer = new StringBuffer();
-                    buffer.append(record.getMillis());
-                    buffer.append(",");
-                    buffer.append(record.getLoggerName());
-                    buffer.append(",");
-                    buffer.append(record.getLevel().getName());
-                    buffer.append(",[");
-                    buffer.append(Thread.currentThread().getName());
-                    buffer.append("],");
-                    buffer.append(record.getMessage());
-                    buffer.append("\r\n") ;
-                    return buffer.toString();
-
-                }
-            };
-
-            fileHandler.setFormatter(formatter);
-            LOGGER.addHandler(fileHandler);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-
-    }
 
     public void start(){
         dispLevelMenu();
@@ -149,6 +118,7 @@ public class TombstoneCity {
         createSprite();
         if (SmallMonster.isEmpty())
             genSmallMonsters();
+        timeFlg = 0 ;
 
        return( !bEndGame );
 
@@ -219,20 +189,20 @@ public class TombstoneCity {
 
     private void createGameloop() {
         gameLoop = new Timeline(new KeyFrame(Duration.millis(500),  new EventHandler<ActionEvent>() {
-
+            int cycleCount = 0 ;
             @Override
             public void handle(javafx.event.ActionEvent event) {
-
                 doGameLoop() ;
+                if (++cycleCount == 8){
+                    cycleCount = 0 ;
+                    if (++timeFlg == m_nLevFlg) {
+                        timeFlg = 0 ;
+                        generateLargeMonsters();
+                    }
+
+                }
             }
         }));
-        KeyFrame genLargeMonstersFrame = new KeyFrame(Duration.seconds(4), new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent event) {
-                generateLargeMonsters();
-            }
-        });
-        gameLoop.getKeyFrames().add(genLargeMonstersFrame);
         gameLoop.setCycleCount(Animation.INDEFINITE);
         gameLoop.play() ;
 
@@ -300,12 +270,11 @@ public class TombstoneCity {
      */
     boolean generateLargeMonsters()
     {
-        LOGGER.info("genarateLargeMonsters");
-
         Generator generator = findGenerator() ;
         if (generator != null){
             releaseMonster(generator);
         }
+        LOGGER.info("generateLargeMonsters "+LargeMonster.getMonsters().size() +" monsters");
         return(generator != null) ;
     }
 
@@ -1038,7 +1007,7 @@ public class TombstoneCity {
                 }
             }
         }
-
+        LOGGER.info("arbshp to "+m_nShiploc);
         gameBoard.writeChar(m_nShiploc, Ship) ;
     }
 
