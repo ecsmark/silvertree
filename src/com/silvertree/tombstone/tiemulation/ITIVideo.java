@@ -79,6 +79,8 @@ public interface ITIVideo {
      */
     public void locateSprite(int spriteNum, int y, int x);
 
+    public void deleteSprite(int spriteNum);
+
     final static int NumRows = 24 ;
     final static int NumColums = 32 ;
 }

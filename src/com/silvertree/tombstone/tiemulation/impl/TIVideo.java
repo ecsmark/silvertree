@@ -193,6 +193,13 @@ public class TIVideo implements ITIVideo {
     }
 
     @Override
+    public void deleteSprite(int spriteNum) {
+        if (sprites[spriteNum] != null)
+            sprites[spriteNum].locate(0, PIXELROWS+1);
+        sprites[spriteNum] = null ;
+    }
+
+    @Override
     public void locateSprite(int spriteNum, int y, int x) {
         Sprite sprite = sprites[spriteNum];
         if (sprite != null){

@@ -107,7 +107,6 @@ public class TombstoneCity {
         LOGGER.info("playDay "+day);
 
         boolean bEndGame = false ;
-        boolean bDoneWithDay = false ;
 
         LargeMonster.createMontab();
         SmallMonster.createMontab() ;
@@ -218,6 +217,7 @@ public class TombstoneCity {
     {
         gameBoard.displayAt(11, 4,"PRESS REDO OR BACK");
         gameLoop.stop();
+        deleteSprite();
         virtualTI.getKeyboard().onKeyPressed(new TIKeyboardEventListener<ITIKeyboard.TIKeyboardEvent>() {
             @Override
             public void handle(TIEmulatorEvent event) {
@@ -1041,7 +1041,9 @@ public class TombstoneCity {
         virtualTI.getVideo().sprite(0, 160, 15, 192, 0, 0, 0) ;
     }
 
-
+    void deleteSprite(){
+        virtualTI.getVideo().deleteSprite(0);
+    }
 
 
     void killtime(int waitval)
