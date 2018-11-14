@@ -871,7 +871,7 @@ public class TombstoneCity {
         GameLogging.debug("after starting animation timer");
         if (monster instanceof LargeMonster)
         {
-            checkForAdjacentGraves(monster.getCurLocation(), false) ;
+            checkForAdjacentGraves(monster.getCurLocation()) ;
         }
         /* ---------------------------------------------------------------- */
         /*     See  if ship is inside safe area  and surrounded    */
@@ -893,16 +893,18 @@ public class TombstoneCity {
      *
      * check for three adjacent graves.  If so they become monsters.
      * @param grave check for graves around this location
-     * @param retry
      */
+    void checkForAdjacentGraves(int grave){
+        adjcount = 0 ;
+        adjgraves[adjcount++] = grave ;
+
+        checkForAdjacentGraves(grave, true );
+    }
+    private int    adjgraves[] = new int[3];
+    private int     adjcount = 0 ;
+
     void checkForAdjacentGraves( int grave, boolean retry)
     {
-
-        int    adjgraves[] = new int[3];
-        int     adjcount = 0 ;
-
-
-        adjgraves[adjcount++] = grave ;
         for (int i=0; i<8; i++)
         {
             if (gameBoard.getCharacter(gameBoard.neighbor(i)+grave) == Characters.Grave)
@@ -928,8 +930,11 @@ public class TombstoneCity {
 
             if ( m_nLevFlg < 3) /* blank out graves for levels 1 or 2  */
             {
-                for (int i=0 ; i < m_nLevFlg; i++)
-                    gameBoard.putBlank(adjgraves[i]) ;
+//                for (int i=0 ; i < m_nLevFlg; i++)
+//                    gameBoard.putBlank(adjgraves[i]) ;
+                gameBoard.putBlank(adjgraves[1]) ;
+                gameBoard.putBlank(adjgraves[2]) ;
+
             }
             // ----------------------------------------------------------------
             //   See if sprite and grave loc still coincide

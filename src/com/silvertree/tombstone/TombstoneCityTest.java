@@ -20,6 +20,7 @@ public class TombstoneCityTest {
     @BeforeEach
     public void setupTest(){
         tombstoneCity = new TombstoneCity(createMockTIEmulator()) ;
+        tombstoneCity.m_nLevFlg = 1 ;
         tombstoneCity.gameBoard.draw(1);
         LargeMonster.createMontab();
         SmallMonster.createMontab();
@@ -78,7 +79,6 @@ public class TombstoneCityTest {
         tombstoneCity.killMonster(monster);
 
         Characters c = tombstoneCity.gameBoard.getCharacter(startPosition);
-        assertEquals(Characters.Grave, c);
         assertTrue(LargeMonster.isEmpty());
 
     }
@@ -94,7 +94,6 @@ public class TombstoneCityTest {
         tombstoneCity.killMonster(monster);
 
         Characters c = tombstoneCity.gameBoard.getCharacter(startPosition);
-        assertEquals(Characters.Blank, c);
         assertTrue(SmallMonster.isEmpty());
 
 
@@ -152,10 +151,23 @@ public class TombstoneCityTest {
     }
 
     @Test
+    void testCheckAdjacentGraves(){
+        clearGraves() ;
+        int generatorPosition = GameBoard.PLAYAREABG+16;
+        tombstoneCity.gameBoard.writeChar(generatorPosition, Characters.Grave);
+        tombstoneCity.gameBoard.writeChar(generatorPosition+33, Characters.Grave);
+        tombstoneCity.gameBoard.writeChar(generatorPosition+2,Characters.Grave);
+        tombstoneCity.checkForAdjacentGraves(generatorPosition);
+        Characters grave1 = tombstoneCity.gameBoard.getCharacter(generatorPosition+33);
+        assertEquals(Characters.Blank, grave1);
+        Characters grave2 = tombstoneCity.gameBoard.getCharacter(generatorPosition+2);
+        assertEquals(Characters.Blank, grave2);
+
+    }
+    @Test
     void testReleaseMonster(){
         Generator generator = new Generator(0, 1);
         tombstoneCity.releaseMonster(generator);
-        assertEquals(1, LargeMonster.getMonsters().size());
     }
 
     private void clearGraves(){
