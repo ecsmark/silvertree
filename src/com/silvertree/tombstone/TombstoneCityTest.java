@@ -20,7 +20,7 @@ public class TombstoneCityTest {
     @BeforeEach
     public void setupTest(){
         tombstoneCity = new TombstoneCity(createMockTIEmulator()) ;
-        tombstoneCity.m_nLevFlg = 1 ;
+        tombstoneCity.setPlayLevel(1);
         tombstoneCity.gameBoard.draw(1);
         LargeMonster.createMontab();
         SmallMonster.createMontab();

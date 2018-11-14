@@ -1059,18 +1059,9 @@ public class TombstoneCity {
 
 
 
-// --------------------------------------------------------------------------------
-//
-// DispLevelMenu
-//
-//  Parameters:		None.
-//
-//  Description: 	routine to put up PreGame screen and display levels
-//
-//  Returns:		None.
-//
-// --------------------------------------------------------------------------------
-
+    /**
+     * put up PreGame screen and display levels
+     */
     void dispLevelMenu()
     {
         ITIKeyboard.TIKeycode	key ;
@@ -1086,6 +1077,23 @@ public class TombstoneCity {
         });
     }
 
+    public void setPlayLevel(int level)
+    {
+        switch(level){
+            case 1:
+                m_nLevFlg = 1 ;
+                m_nSpeed = 1 ;
+                break;
+            case 2:
+                m_nLevFlg = 1 ;
+                m_nSpeed = 2 ;
+                break;
+            case 3:
+                m_nLevFlg = 2 ;
+                m_nSpeed = 3 ;
+                break;
+     }
+    }
     private void handleDisplayLevelMenuSelection(TIEmulatorEvent event) {
         LOGGER.info("handleDisplayLevelMenuSelection event="+((ITIKeyboard.TIKeyboardEvent)event).getKeyCode().toString());
         switch(((ITIKeyboard.TIKeyboardEvent)event).getKeyCode()){
@@ -1093,16 +1101,13 @@ public class TombstoneCity {
                 displayHelpMenu();
                 return ;
             case DIGIT1:
-                m_nLevFlg = 1 ;
-                m_nSpeed = 1 ;
+                setPlayLevel(1);
                 break;
             case DIGIT2:
-                m_nLevFlg = 1 ;
-                m_nSpeed = 2 ;
+                setPlayLevel(2);
                 break;
             case DIGIT3:
-                m_nLevFlg = 2 ;
-                m_nSpeed = 3 ;
+                setPlayLevel(3);
                 break;
             default:
                 return ;
