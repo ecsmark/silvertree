@@ -7,23 +7,48 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
-import java.util.logging.Logger;
 
+/**
+ * represents the gameboard for Tombstone City including the play space and
+ * the title area.   Handles all access to reading and writing to the gameboard from
+ * the game logic.
+ */
 public class GameBoard {
     final static  Rectangle s_rectSafeArea = new Rectangle(12, 8, 19 , 13  );
 
+    /**
+     * number of rows in character positions on the gameboard
+     */
     public final static int NUMBERROWS = 24 ;
+    /**
+     * number of columns in character positions on the gamebaord
+     */
     public final static int NUMBERCOLUMNS = 32 ;
 
     final static  int MAXROW = NUMBERROWS -1;
     final static int MAXCOL = NUMBERCOLUMNS -1  ;
     final static int MAXGRAVEPAIRS = 30 ;
 
+    /**
+     * initial location of the ship in the center of the safe area
+     */
     public final static int INITSHIPLOC = 367 ;
+    /**
+     * position of the start of the play area
+     */
     public final static int PLAYAREABG = 98;
+    /**
+     * last position of the play area
+     */
     public final static int PLAYAREAEND = 670;
+    /**
+     * column for the safe area start
+     */
     public final static int SAFEAREABEGINCOLUMN = 12 ;
     public final static int SAFEAREAENDCOLUMN = 18 ;
+    /**
+     * starting row of the safe area
+     */
     public final static int SAFEAREABEGINROW = 8 ;
     public final static int SAFEAREENDROW = 14 ;
 
@@ -46,15 +71,26 @@ public class GameBoard {
         blankScreen();
     }
 
-    static int row(int screenPosition){
+    /**
+     * convert a screen position to it's containing row
+     * @param screenPosition
+     * @return row which contains the screen position
+     */
+    public static int row(int screenPosition){
         return screenPosition / NUMBERCOLUMNS ;
     }
-    static int column(int screenPostion){
+
+    /**
+     * convert a screen position to its containing column
+     * @param screenPostion
+     * @return column which contains the screen position
+     */
+    public static int column(int screenPostion){
         return screenPostion % NUMBERCOLUMNS ;
     }
 
     /**
-     *
+     * blank the entire gameboard.
      */
     public void blankScreen(){
         for (int row=0; row < MAXROW+1; row++)
@@ -72,7 +108,7 @@ public class GameBoard {
      * retrieve the character in the gameboard at the screen position.
      *
      * @param position - screen relative character position
-     * @return character at position
+     * @return character at position as an integer value
      */
     private int getChar(int position){
         byte byteValue = tiVideo.getChar(position);
@@ -87,6 +123,13 @@ public class GameBoard {
             charactersMap.put(characterValue.getChrIndex(), characterValue);
         }
     }
+
+    /**
+     * return the Characters value at the given position on the gameboard
+     * @param position absolute position on the gameboard
+     * @return Tombstone City character at the position.
+     *          null if an unknown character type (not defined in Characters enum)
+     */
     public Characters getCharacter(int position){
         if (charactersMap == null)
             initCharactersMap() ;
@@ -94,9 +137,20 @@ public class GameBoard {
         return charactersMap.get(charValue);
 
     }
+
+    /**
+     *  put a blank character at the board position.
+     * @param position absolute board position
+     */
     public void putBlank(int position){
         putBlank(row(position), column(position));
     }
+
+    /**
+     * put a blank character at the board position as defined by a row and column
+     * @param row
+     * @param col
+     */
     public void putBlank(int row, int col)
     {
 
@@ -105,6 +159,12 @@ public class GameBoard {
         writeChar(row, col, c) ;
     }
 
+    /**
+     * display a set of characters starting the row and column defined.
+     * @param row
+     * @param col
+     * @param characters
+     */
     public void displayAt(int row, int col, Characters[] characters){
         int columnIndex = col;
         for(Characters character: characters)   {
@@ -112,6 +172,13 @@ public class GameBoard {
         }
     }
 
+    /**
+     *  display a string starting at the row and column.  The string characters
+     *  are not limited to the Characters enum
+     * @param row
+     * @param col
+     * @param str
+     */
     public void displayAt(int row, int col, String str){
         tiVideo.displayAt(row, col, str);
     }
@@ -132,6 +199,9 @@ public class GameBoard {
         tiVideo.wrChar(row, col,  chr);
     }
 
+    /**
+     * display the pre game screen - title area at top.
+     */
     public void preGameScreen()
     {
         final int line1[] = new int[]{138, 138, 136, 93, 32, 32,
@@ -152,6 +222,10 @@ public class GameBoard {
 
     }
 
+    /**
+     *  create gameboard for a new day
+     * @param day (1-x)
+     */
     void draw(int day)
     {
         final  Characters[] outl6 =new Characters[] {Characters.SafeAreaColumn, Characters.SafeAreaBlank, Characters.SafeAreaColumn,
@@ -184,7 +258,7 @@ public class GameBoard {
         for (int n=0; n < graves; )
         {
             // find a blank random location
-            int grave1=  RandomBlank() ;
+            int grave1=  randomBlank() ;
             int grave2= neighbor((short) random.nextInt(7))+grave1;
             if (areAllNeighborsBlank(grave1) && areAllNeighborsBlank(grave2))
             {
@@ -202,12 +276,20 @@ public class GameBoard {
     }
 
 
-
+    /**
+     * display the score at the specified area on the gameboard
+     * @param score
+     */
     public void displayScore(int score) {
         tiVideo.displayAt(23,8, "          ") ;
         DisplayNumeric(score,23,17) ;
 
     }
+
+    /**
+     * display the day at the specified area on the gameboard
+     * @param day
+     */
     public void displayDay(int day){
         DisplayNumeric(day, 23, 5);
     }
@@ -223,7 +305,11 @@ public class GameBoard {
         }
     }
 
-    void displaySchooners(int numberSchooners){
+    /**
+     * display the number of schooners (ships) at the specified area on the gameboard
+     * @param numberSchooners
+     */
+    public void displaySchooners(int numberSchooners){
         DisplayNumeric(numberSchooners, 23, 28);
     }
 
@@ -235,6 +321,9 @@ public class GameBoard {
         tiVideo.setColor(19, (byte)0x47) ;
     }
 
+    /**
+     * display the menu with the choices for the play level.
+     */
     public void displayLevelMenu(){
         tiVideo.displayAt(6,8,"LEVEL 1 = NOVICE") ;
             tiVideo.displayAt(7,8,"LEVEL 2 = MASTER") ;
@@ -286,7 +375,9 @@ public class GameBoard {
         return(true) ;
     }
 
-
+    /**
+     * display the help menu
+     */
     public void displayHelpMenu(){
         final String szRule1 ="MOVE SCHOONER\u0082 ARROW KEYS" ;
         final String szRule2 ="FIRE MISSILE \u0082Q/Y/INSERT" ;
@@ -312,9 +403,15 @@ public class GameBoard {
         tiVideo.wrChar(11,17, 0x82) ;
 
     }
-    int s_neighborCells[] = new int[] {	-32, -31, 1, 33, 32, 31, -1, -33 };
+    private int s_neighborCells[] = new int[] {	-32, -31, 1, 33, 32, 31, -1, -33 };
 
-    boolean areAllNeighborsBlank(int screenloc)
+    /**
+     * are all the adjacent locations (neighbors) of a given position blank?
+     * @param screenloc
+     * @return true all neighbors are blank
+     *          false at least one neighbor contains a non-blank character
+     */
+    public boolean areAllNeighborsBlank(int screenloc)
     {
         boolean areBlank = true ;
         for (int i=0; i< s_neighborCells.length && areBlank; i++)
@@ -324,27 +421,32 @@ public class GameBoard {
         return( areBlank ) ;
     }
 
-    int neighbor(int cell)
+    public int neighbor(int cell)
     {
         if (cell < 0 ) cell = 0 ;
         return(s_neighborCells[cell]);
 
     }
 
+    /**
+     * return a random location within the player area of the gameboard.
+     * @return random position
+     */
     public int randomPlayAreaLocation(){
         return random.nextInt(PLAYAREAEND-PLAYAREABG)+PLAYAREABG;
     }
 
-    int RandomBlank()
+    /**
+     * find and return a random blank location on the board.
+     * @return position of random blank.
+     */
+    private int randomBlank()
     {
-        int tryCount = 0 ;
         int blank_loc ;
         do
         {
             blank_loc =  randomPlayAreaLocation() ;
-            tryCount++ ;
         } while (tiVideo.getChar(blank_loc) != ' ') ;
-        GameLogging.debug("RandomBlank tryCount ="+tryCount);
         return(blank_loc) ;
     }
     private void initColors(){
@@ -422,6 +524,12 @@ public class GameBoard {
         random = ThreadLocalRandom.current();
     }
 
+    /**
+     * return a random integer within a specific range
+     * @param min minimum value (inclusive)
+     * @param max maximum value (inclusive)
+     * @return
+     */
     public int getRandom(int min, int max){
         return random.nextInt(max-min) + max ;
     }

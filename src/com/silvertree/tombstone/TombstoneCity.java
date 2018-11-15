@@ -8,8 +8,16 @@ import javafx.event.EventHandler;
 import javafx.util.Duration;
 
 import java.util.List;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
 import java.util.logging.*;
 
+/**
+ * Implements the Game Tombstone City 21st century as originally
+ * implemented on the TI994a.  Logic based on original assembler
+ * source provided by TI.  Re-implemented JavaFX.  Java implementation
+ * created from a C/C++ port done many years ago.
+ */
 public class TombstoneCity {
 
     int   	m_nLevFlg  ;
@@ -38,6 +46,10 @@ public class TombstoneCity {
 
     private final static Logger LOGGER = GameLogging.setup();
 
+    /**
+     * create the game and attach to a display/input controller.
+     * @param pTI99 TI99 emulator for screen and keyboard management.
+     */
     public TombstoneCity(IVirtualTI pTI99) {
         virtualTI = pTI99;
         Score10 = 0;      // Score (10,000)
@@ -60,7 +72,9 @@ public class TombstoneCity {
         Schooners = 9;
     }
 
-
+    /**
+     * start the game flow by displaying the initial screen (the level menu).
+     */
     public void start(){
         dispLevelMenu();
 
@@ -98,13 +112,14 @@ public class TombstoneCity {
     }
 
     /**
-     *
+     * start play for a day.
      * @param day
-     * @return
+     * @return true game continues
+     *         false end of game.
      */
     public boolean playDay(int day)
     {
-        LOGGER.info("playDay "+day);
+        GameLogging.debug("playDay "+day);
 
         boolean bEndGame = false ;
 
@@ -126,10 +141,17 @@ public class TombstoneCity {
        return( !bEndGame );
 
     }
+
+    /**
+     * begin the actual game play.  Creates the gameloop which drives background logic and
+     * attaches to a keyboard event handler to process game play key events.
+     */
     void gameBegin(){
 
         LOGGER.entering(this.getClass().getName(), "gameBegin");
-        LOGGER.info("gameBegin");
+        GameLogging.debug("gameBegin");
+
+        // attach to the keyboard event handler
         virtualTI.getKeyboard().onKeyPressed(new TIKeyboardEventListener<ITIKeyboard.TIKeyboardEvent>() {
             @Override
             public void handle(TIEmulatorEvent event) {
@@ -147,31 +169,40 @@ public class TombstoneCity {
 
     }
 
-    int loopCount = 0 ;
+    /**
+     * basic game loop called on each pulse.
+     */
     private void doGameLoop(){
-        LOGGER.info("gameLoop begin");
+        GameLogging.debug("gameLoop begin");
         if (checkForNewDay()){
             playDay(++day);
             return ;
         }
         if (timeToReleaseMoreMonsters()){
             if (generateLargeMonsters() && SmallMonster.isEmpty()) {
-                LOGGER.info("generating more small monsters in gameLoop");
+                GameLogging.debug("generating more small monsters in gameLoop");
                 genSmallMonsters();
             }
         }
+        // move the monsters
         moveSmallMonsters();
         moveLargeMonsters();
         verifyMonsterTables() ;
-        LOGGER.info("gameLoop end");
+        GameLogging.debug("gameLoop end");
     }
 
     private void verifyMonsterTables() {
-        List<Monster> smallMonsters = SmallMonster.getMonsters();
-        smallMonsters.stream().forEach(m -> {int current = m.getCurLocation();
-        if (gameBoard.getCharacter(current) != m.getCharacter(1) && gameBoard.getCharacter(current) != m.getCharacter(2))
-            GameLogging.error("Monster missing:"+m.toString());
+        Consumer<Monster> x = (m -> {int current = m.getCurLocation();
+            if (gameBoard.getCharacter(current) != m.getCharacter(1) && gameBoard.getCharacter(current) != m.getCharacter(2))
+                GameLogging.error("Monster missing:"+m.toString());
         });
+
+        List<Monster> smallMonsters = SmallMonster.getMonsters();
+        smallMonsters.stream().forEach(x);
+
+        List<Monster> largeMonsters = LargeMonster.getMonsters();
+        largeMonsters.stream().forEach(x);
+
     }
 
     private boolean timeToReleaseMoreMonsters() {
@@ -192,13 +223,16 @@ public class TombstoneCity {
         return false ;
     }
 
+    private final static int GAMELOOP_PULSE = 500 ;         // gameloop pulse in ms
+    private final static int MONSTER_RELEASE_CYCLE = (4*1000)/GAMELOOP_PULSE ;
+
     private void createGameloop() {
-        gameLoop = new Timeline(new KeyFrame(Duration.millis(500),  new EventHandler<ActionEvent>() {
-            int cycleCount = 0 ;
+        gameLoop = new Timeline(new KeyFrame(Duration.millis(GAMELOOP_PULSE),  new EventHandler<ActionEvent>() {
+            int cycleCount = 0 ;  // manage game loop cycles for releasing monsters
             @Override
             public void handle(javafx.event.ActionEvent event) {
                 doGameLoop() ;
-                if (++cycleCount == 8){
+                if (++cycleCount == MONSTER_RELEASE_CYCLE){
                     cycleCount = 0 ;
                     if (++timeFlg == m_nLevFlg) {
                         timeFlg = 0 ;
@@ -213,6 +247,10 @@ public class TombstoneCity {
 
     }
 
+    /**
+     * process game end, either game initiated or use initiated.
+     * Stops the game loop and displays a restart or exit message.
+     */
     void gameEnd()
     {
         gameBoard.displayAt(11, 4,"PRESS REDO OR BACK");
@@ -842,6 +880,7 @@ public class TombstoneCity {
 
         if (monster.removeFromMontab())
         {
+            GameLogging.debug("monster "+monster.toString()+" removed from table");
             Score += monster.getPointValue() ;
         }
         gameBoard.displayScore(Score) ;

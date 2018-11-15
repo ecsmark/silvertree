@@ -30,12 +30,12 @@ public abstract class Monster {
                 return true ;
             }
         }
-        GameLogging.warning( "removeFromMontab: did not find Monster "+this.toString()+" in Montab");
+        GameLogging.error( "removeFromMontab: did not find Monster "+this.toString()+" in Montab");
         return false ;
     }
 
     @Override
     public String toString() {
-        return getClass().getSimpleName()+"[curLocation="+getCurLocation()+"]";
+        return getClass().getSimpleName()+"@"+hashCode()+"[curLocation="+getCurLocation()+"]";
     }
 }
