@@ -34,6 +34,15 @@ public class SmallMonster extends Monster{
     }
 
     @Override
+    public Characters nextFrameCharacter(Characters currentFrameCharacter) {
+        if (currentFrameCharacter == Characters.Small1)
+            return Characters.Small2;
+        else if (currentFrameCharacter == Characters.Small2)
+            return Characters.Small1 ;
+        return null;
+    }
+
+    @Override
     public int getPointValue() {
         return POINTVALUE;
     }

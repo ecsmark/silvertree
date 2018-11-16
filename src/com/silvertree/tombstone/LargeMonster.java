@@ -30,6 +30,15 @@ public class LargeMonster extends Monster {
         return Characters.Grave;
     }
 
+    @Override
+    public Characters nextFrameCharacter(Characters currentFrameCharacter) {
+        if (currentFrameCharacter == Characters.Large1)
+            return Characters.Large2 ;
+        else if (currentFrameCharacter == Characters.Large2)
+            return Characters.Large1;
+        return null ;
+    }
+
     static void createMontab(){
         if (LMontab != null){
             LMontab.clear();

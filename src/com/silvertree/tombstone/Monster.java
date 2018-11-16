@@ -37,6 +37,9 @@ public abstract class Monster {
      */
     public abstract Characters replaceCharacter();
 
+    public abstract Characters nextFrameCharacter(Characters currentFrameCharacter);
+
+
     /**
      *
      * @return point value for killing this monster type

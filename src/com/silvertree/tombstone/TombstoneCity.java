@@ -7,7 +7,10 @@ import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.util.Duration;
 
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.logging.*;
@@ -43,6 +46,7 @@ public class TombstoneCity {
     static final ITIKeyboard.TIKeycode PANICKEY = TIKeyboard.TIKeycode.SPACE ;
     static final TIKeyboard.TIKeycode FIREKEY = TIKeyboard.TIKeycode.Q ;
     Timeline gameLoop ;
+    private static final long NS_PER_MS = 1000L * 1000L;
 
     private final static Logger LOGGER = GameLogging.setup();
 
@@ -400,12 +404,12 @@ public class TombstoneCity {
                 public void handle(long now) {
                     if (start == 0) start = now ;
 
-                    if (Duration.millis((now - start)/(1000*1000)).greaterThanOrEqualTo(Duration.millis(1500.0))){
+                    if (Duration.millis((now - start)/(NS_PER_MS)).greaterThanOrEqualTo(Duration.millis(1500.0))){
                         gameBoard.writeChar(generator.getReleasePoint(), Characters.Large2) ;
                         ++m_nGencur ;
                         Monster monster = new LargeMonster(generator.getReleasePoint());
                         monster.addToMontab();
-                        LOGGER.info("releaseMonster at "+ monster.getCurLocation()+ " from generator at "+Sprloc);
+                        LOGGER.info("releaseMonster at "+ monster.getCurLocation()+ " from generator at "+Sprloc+" "+monster.toString());
                         gameBoard.safeAreaBlueOnBlue() ;
                         this.stop() ;
 
@@ -476,7 +480,7 @@ public class TombstoneCity {
                 int moncol = GameBoard.column(monsterPosition);
                 if (shiprow == monrow)
                 { /* on same row */
-                    newmonloc =monsterPosition;
+                    newmonloc =monster.getCurLocation();
                     if (shipcol > moncol)
                         --newmonloc ;
                     else
@@ -485,15 +489,15 @@ public class TombstoneCity {
                     Characters c = gameBoard.getCharacter(newmonloc);
                     if (c == Characters.Blank)
                     {
+                        monblk(monster, newmonloc) ;
                         monster.setCurLocation(newmonloc);
-                        monblk(monsterPosition, newmonloc) ;
-                        LOGGER.info("moveSmallMonster from "+monsterPosition+" to "+newmonloc);
+                        LOGGER.info("moveSmallMonster from "+monster.getCurLocation()+" to "+newmonloc);
                         continue ;
                     }
                 }
                 if (shipcol == moncol)
                 { /* on same column MONCOL  */
-                    newmonloc = monsterPosition ;
+                    newmonloc = monster.getCurLocation() ;
                     if (shiprow > monrow )
                         newmonloc-=GameBoard.NUMBERCOLUMNS ;
                     else
@@ -502,8 +506,8 @@ public class TombstoneCity {
                     Characters c = gameBoard.getCharacter(newmonloc);
                     if (c == Characters.Blank)
                     {
+                        monblk(monster,newmonloc) ;
                         monster.setCurLocation(newmonloc);
-                        monblk(monsterPosition, newmonloc);
                         LOGGER.info("moveSmallMonster from "+monsterPosition+" to "+newmonloc);
                         continue ;
                     }
@@ -599,7 +603,7 @@ public class TombstoneCity {
         if (c == Characters.Blank)
         {
             LOGGER.info("move "+monster.toString()+" to "+newmonloc);
-            monblk(monster.getCurLocation(), newmonloc) ;
+            monblk(monster, newmonloc) ;
             monster.setCurLocation(newmonloc);
             moveFound =  true  ;
 
@@ -611,26 +615,18 @@ public class TombstoneCity {
         return( moveFound ) ;
     }
 
-    void monblk(int curloc, int newloc)
+    void monblk(Monster monster, int newloc)
     {
-        Characters monchar = gameBoard.getCharacter(curloc) ;
+        Characters monchar = gameBoard.getCharacter(monster.getCurLocation()) ;
 
-        Characters newChar = Characters.Small1;
+        Characters newChar = monster.nextFrameCharacter(monchar);
 
-        if (monchar == Characters.Large1)
-            newChar = Characters.Large2 ;
-        else if (monchar == Characters.Large2)
-            newChar = Characters.Large1 ;
-        else if (monchar == Characters.Small1)
-            newChar = Characters.Small2 ;
-        else if (monchar == Characters.Small2)
-            newChar = Characters.Small1 ;
-        else {
-            LOGGER.info("monblk " + monchar.name() + " set to " + newChar.name());
+        if (newChar == null){
+            GameLogging.error("monblk " + monchar.name() + " invalid character for "+monster.toString()+ "->"+monchar);
             return ;
         }
         gameBoard.writeChar(newloc, newChar) ;
-        gameBoard.putBlank(curloc) ;
+        gameBoard.putBlank(monster.getCurLocation()) ;
     }
 
     /**
@@ -646,7 +642,7 @@ public class TombstoneCity {
         boolean captured = false ;
         if (!isShipInSafeArea())
         {
-            monblk(monster.getCurLocation(), newmonloc) ;
+            monblk(monster, newmonloc) ;
             monster.setCurLocation(newmonloc);
             gulp() ;
             capture() ;
@@ -898,9 +894,13 @@ public class TombstoneCity {
                     gameBoard.writeChar(monster.getCurLocation(), Characters.Explode) ;
 
                 }
-                else if (now - last > 1000L*1000L*240){
+                else if (now - last > NS_PER_MS * 500){
                     GameLogging.debug("animation timer last run");
                     gameBoard.writeChar(monster.getCurLocation(), monster.replaceCharacter());
+                    if (monster instanceof LargeMonster)
+                    {
+                        checkForAdjacentGraves(monster.getCurLocation()) ;
+                    }
                     stop();
                 }
             }
@@ -908,10 +908,6 @@ public class TombstoneCity {
 
 
         GameLogging.debug("after starting animation timer");
-        if (monster instanceof LargeMonster)
-        {
-            checkForAdjacentGraves(monster.getCurLocation()) ;
-        }
         /* ---------------------------------------------------------------- */
         /*     See  if ship is inside safe area  and surrounded    */
         /* ---------------------------------------------------------------- */
@@ -934,45 +930,46 @@ public class TombstoneCity {
      * @param grave check for graves around this location
      */
     void checkForAdjacentGraves(int grave){
-        adjcount = 0 ;
-        adjgraves[adjcount++] = grave ;
-
-        checkForAdjacentGraves(grave, true );
+        GameLogging.debug("checkForAdjacentGraves "+grave);
+        List<Integer> adjacentGraves = new ArrayList<>();
+        adjacentGraves.add(grave);
+        checkForAdjacentGraves(adjacentGraves, grave, true );
     }
-    private int    adjgraves[] = new int[3];
-    private int     adjcount = 0 ;
 
-    void checkForAdjacentGraves( int grave, boolean retry)
+    void checkForAdjacentGraves(List<Integer> adjacentGraves, int grave, boolean retry)
     {
         for (int i=0; i<8; i++)
         {
-            if (gameBoard.getCharacter(gameBoard.neighbor(i)+grave) == Characters.Grave)
+            int nextLocation = gameBoard.neighbor(i)+grave;
+            if (gameBoard.getCharacter(nextLocation) == Characters.Grave)
             {
-                adjgraves[adjcount++] = gameBoard.neighbor(i)+grave ;
-                if (adjcount == 3)
+                if (!adjacentGraves.contains(nextLocation)) {
+                    adjacentGraves.add(nextLocation);
+                }
+                if (adjacentGraves.size() == 3)
                     break ;
             }
         }
 
-        if (adjcount  == 3)
+        if (adjacentGraves.size()  == 3)
         {
             /* ---------------------------------------------------------------- */
             /*  generate 1,2, or 3 monsters from the 3 adjacent graves for     */
             /*  levels 1,2, and 3 respectively               */
             /* ---------------------------------------------------------------- */
-
-            for (int n=0, i=0; i < m_nLevFlg; i++)
-            {
-                gameBoard.writeChar(adjgraves[n], Characters.Large1) ;
-                new LargeMonster(adjgraves[n++]).addToMontab();
-            }
+            GameLogging.debug("found 3 adjacent graves for "+grave);
+//            for (int n=0, i=0; i < m_nLevFlg; i++)
+//            {
+//                gameBoard.writeChar(adjgraves[n], Characters.Large1) ;
+//                new LargeMonster(adjgraves[n++]).addToMontab();
+//                GameLogging.debug("released extra monster at "+)
+//            }
 
             if ( m_nLevFlg < 3) /* blank out graves for levels 1 or 2  */
             {
-//                for (int i=0 ; i < m_nLevFlg; i++)
-//                    gameBoard.putBlank(adjgraves[i]) ;
-                gameBoard.putBlank(adjgraves[1]) ;
-                gameBoard.putBlank(adjgraves[2]) ;
+                adjacentGraves.stream().forEach(pos -> {if (pos != grave) {gameBoard.putBlank(pos);
+                                                                            GameLogging.debug(" writing blank to "+pos);
+                }});
 
             }
             // ----------------------------------------------------------------
@@ -983,9 +980,9 @@ public class TombstoneCity {
                 virtualTI.getVideo().locateSprite(0,(GameBoard.MAXROW+1)*8, 0) ;     /* turn off sprite      */
             }
         }
-        else if (retry && adjcount == 2)
+        else if (retry && adjacentGraves.size() == 2)
         {
-            checkForAdjacentGraves( adjgraves[1], false) ;
+            checkForAdjacentGraves( adjacentGraves, adjacentGraves.get(1), false) ;
         }
 
     }
