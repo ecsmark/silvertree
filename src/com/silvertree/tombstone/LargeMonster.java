@@ -3,6 +3,9 @@ package com.silvertree.tombstone;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * instance of a large monster (MORG) in Tombstone City.
+ */
 public class LargeMonster extends Monster {
     static List<Monster> LMontab ;
     public static int MAXLARGEMONSTERCOUNT = 9 ;

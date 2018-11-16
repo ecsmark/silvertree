@@ -1,7 +1,13 @@
 package com.silvertree.tombstone;
 
+/**
+ * This enum represents all the character patterns created specifically for the Tombstone City gameboard.
+ */
 public enum Characters {
     Blank(32),
+    /**
+     * Grave (appears a saguero cactus.
+     */
     Grave(93),
     BottomEdge(95),
     Explode(97),

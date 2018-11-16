@@ -4,6 +4,9 @@ import java.awt.image.TileObserver;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * instance of a Small Monster (tumbleweed) in Tombstone City.
+ */
 public class SmallMonster extends Monster{
     public final static int MAXSMALLMONSTERCOUNT = 20 ;
     final static int POINTVALUE = 100 ;
@@ -41,13 +44,27 @@ public class SmallMonster extends Monster{
         }
         SMontab = new ArrayList<>(MAXSMALLMONSTERCOUNT);
     }
+
+    /**
+     * static method to return the Small monster table.
+     * @return small monster table.
+     */
     static List<Monster> getMonsters(){
         return SMontab ;
     }
 
+    /**
+     * Is the small monster table empty?
+     * @return true the table is empty.
+     */
     static boolean isEmpty(){
         return SMontab.isEmpty();
     }
+
+    /**
+     * Do we have the maximum allowed Small monsters
+     * @return true if the monster table contains the maximum small monsters.
+     */
     public static boolean isFull(){
         return SMontab.size() >= MAXSMALLMONSTERCOUNT ;
     }

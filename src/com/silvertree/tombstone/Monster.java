@@ -3,6 +3,9 @@ package com.silvertree.tombstone;
 import java.util.Iterator;
 import java.util.List;
 
+/**
+ * base class for the Tombstone City monster types
+ */
 public abstract class Monster {
     public int getCurLocation() {
         return curLocation;
@@ -13,14 +16,43 @@ public abstract class Monster {
     }
 
     int curLocation ;
+
+    /**
+     * return the Tombstone City Character for the monster view
+     * @param type 1 or 2
+     * @return Character for the given type or view
+     */
     public abstract Characters getCharacter(int type);
+
+    /**
+     * return the Monster Table for the monster class
+     * @return table of currently active monsters.
+     */
     public abstract List<Monster> getMontab() ;
+
+    /**
+     * return the character that should be placed on the gameboard
+     * when the monster is killed.
+     * @return
+     */
     public abstract Characters replaceCharacter();
+
+    /**
+     *
+     * @return point value for killing this monster type
+     */
     public abstract int getPointValue() ;
 
     public void addToMontab(){
         getMontab().add(this);
     }
+
+    /**
+     * remove the monster from its corresponding Monster table.
+     *
+     * @return true monster found in table
+     *         false monster not found in table
+     */
     public  boolean removeFromMontab(){
         Iterator<Monster>  iter = getMontab().iterator();
         while(iter.hasNext()){
