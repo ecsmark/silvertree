@@ -8,11 +8,8 @@ import javafx.event.EventHandler;
 import javafx.util.Duration;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.function.Consumer;
-import java.util.function.Predicate;
 import java.util.logging.*;
 
 /**
@@ -29,8 +26,7 @@ public class TombstoneCity {
     int   	Score10  ;  	/* Score (10,000)          */
     int   	Score ;       	/* Score - digits 0-9999      */
     int   	Schooners = 9 ;
-    int   	m_nShiploc ;	/* current ship location      */
-    int   	m_nGencur =GameBoard.PLAYAREABG  ;	/* current Generator location   */
+    int   	m_nGencur =GameBoard.PLAYAREABG  ;	// current Generator location
     int   	Sprloc  ;
     int   	Sprflg  ;
     Characters		Ship ;
@@ -49,6 +45,7 @@ public class TombstoneCity {
     private static final long NS_PER_MS = 1000L * 1000L;
 
     private final static Logger LOGGER = GameLogging.setup();
+    private List<AnimationTimer> activeAnimators = new ArrayList<>() ;
 
     /**
      * create the game and attach to a display/input controller.
@@ -60,7 +57,6 @@ public class TombstoneCity {
         Score = 0;       // Score - digits 0-9999
         Schooners = 0;
         Ship = Characters.ShipRight;            // current ship character
-        m_nShiploc = GameBoard.INITSHIPLOC;     // current ship location
         m_nGencur = GameBoard.PLAYAREABG;      // current Generator location
         Sprloc = 0;
         Sprflg = 0;
@@ -109,6 +105,9 @@ public class TombstoneCity {
             case REDO:
                 gameEnd() ;
                 break;
+            case BEGIN:
+                startNextDay();  // backdoor for testing
+                break;
 
 
         }
@@ -124,7 +123,10 @@ public class TombstoneCity {
     public boolean playDay(int day)
     {
         GameLogging.debug("playDay "+day);
-
+        if (!activeAnimators.isEmpty()){
+            activeAnimators.stream().forEach(animator->animator.stop());
+            activeAnimators.clear();
+        }
         boolean bEndGame = false ;
 
         LargeMonster.createMontab();
@@ -177,9 +179,10 @@ public class TombstoneCity {
      * basic game loop called on each pulse.
      */
     private void doGameLoop(){
-        GameLogging.debug("gameLoop begin");
+        GameLogging.debug("gameLoop begin tickcount=");
+
         if (checkForNewDay()){
-            playDay(++day);
+            startNextDay();
             return ;
         }
         if (timeToReleaseMoreMonsters()){
@@ -195,10 +198,17 @@ public class TombstoneCity {
         GameLogging.debug("gameLoop end");
     }
 
+    private void startNextDay(){
+        gameLoop.pause();
+        playDay(++day);
+    }
+
     private void verifyMonsterTables() {
         Consumer<Monster> x = (m -> {int current = m.getCurLocation();
-            if (gameBoard.getCharacter(current) != m.getCharacter(1) && gameBoard.getCharacter(current) != m.getCharacter(2))
-                GameLogging.error("Monster missing:"+m.toString());
+            if (gameBoard.getCharacter(current) != m.getCharacter(1) && gameBoard.getCharacter(current) != m.getCharacter(2)) {
+                GameLogging.error("Monster missing:" + m.toString());
+                m.removeFromMontab();
+            }
         });
 
         List<Monster> smallMonsters = SmallMonster.getMonsters();
@@ -250,7 +260,15 @@ public class TombstoneCity {
         gameLoop.play() ;
 
     }
-
+    AnimationTimer startAnimationTimer(AnimationTimer animationTimer){
+        activeAnimators.add(animationTimer);
+        animationTimer.start() ;
+        return animationTimer ;
+    }
+    void stopAnimationTimer(AnimationTimer animationTimer){
+        animationTimer.stop() ;
+        activeAnimators.remove(animationTimer);
+    }
     /**
      * process game end, either game initiated or use initiated.
      * Stops the game loop and displays a restart or exit message.
@@ -279,12 +297,6 @@ public class TombstoneCity {
     void themeSong()
     {
     }
-
-
-
-
-
-
 
     /**
      * generate max small monsters
@@ -398,7 +410,7 @@ public class TombstoneCity {
             virtualTI.getVideo().locateSprite(0, y, x) ;
 
 
-            new AnimationTimer(){
+            startAnimationTimer( new AnimationTimer(){
                 long start = 0 ;
                 @Override
                 public void handle(long now) {
@@ -411,35 +423,28 @@ public class TombstoneCity {
                         monster.addToMontab();
                         LOGGER.info("releaseMonster at "+ monster.getCurLocation()+ " from generator at "+Sprloc+" "+monster.toString());
                         gameBoard.safeAreaBlueOnBlue() ;
-                        this.stop() ;
-
+                        stopAnimationTimer(this);
                     }
                 }
-            }.start() ;
+            } );
         }
     }
 
-
-
-
-    void keydep()
-    {
-//        while(m_pTI99->checkKeyboard() == 0)
-//            randno() ;
-    }
-
-
-    // -----------------------------------------------------------------------
-    //  movshp() - move ship
-    // -----------------------------------------------------------------------
+    /**
+     * move ship
+     * @param shipCharacter
+     * @param offset
+     * @return
+     */
     boolean movshp(Characters shipCharacter, int offset)
     {
         LOGGER.info("movshp("+shipCharacter+","+offset+")");
-        int     newshiploc ;
+        if (gameLoop.getStatus() == Animation.Status.PAUSED)  // if we are tranistioning days, restart the game loop.
+            gameLoop.playFromStart();
 
         if (shipCharacter != Ship)	/* check to see if orientation changes	    */
         {
-            gameBoard.writeChar(m_nShiploc, shipCharacter) ;
+            gameBoard.writeChar(gameBoard.getCurrentShipLocation(), shipCharacter) ;
             Ship = shipCharacter ;
             offset = 0 ;
         }
@@ -448,14 +453,12 @@ public class TombstoneCity {
         {
             /* kill time of same depressed	    */
         }
-        newshiploc = offset + m_nShiploc ;
+        int newshiploc = offset + gameBoard.getCurrentShipLocation() ;
 
         Characters currentChr = gameBoard.getCharacter(newshiploc);
         if ((currentChr !=Characters.Blank && currentChr !=  Characters.SafeAreaBlank)|| currentChr ==  Ship)
             return( false ) ;
-        gameBoard.writeChar(newshiploc, Ship) ;
-        gameBoard.putBlank(m_nShiploc) ;
-        m_nShiploc = newshiploc ;
+        gameBoard.moveShip(newshiploc, Ship);
         return( false ) ;
     }
 
@@ -471,8 +474,8 @@ public class TombstoneCity {
         if (!SmallMonster.isEmpty())
         {
 
-            int shiprow = GameBoard.row(m_nShiploc) ;
-            int shipcol = GameBoard.column(m_nShiploc );
+            int shiprow = GameBoard.row(gameBoard.getCurrentShipLocation()) ;
+            int shipcol = GameBoard.column(gameBoard.getCurrentShipLocation() );
             for(Monster monster : SmallMonster.getMonsters())
             {
                 int monsterPosition = monster.getCurLocation();
@@ -524,15 +527,14 @@ public class TombstoneCity {
      */
     void moveLargeMonsters()
     {
-        LOGGER.info("moveLargeMonsters");
+        GameLogging.debug("moveLargeMonsters");
         int     newmonloc ;
-        int     moveflg = 0;
 
         if (!LargeMonster.isEmpty() )
         {
 
-            int shiprow = GameBoard.row(m_nShiploc) ;
-            int shipcol = GameBoard.column(m_nShiploc );
+            int shiprow = GameBoard.row(gameBoard.getCurrentShipLocation()) ;
+            int shipcol = GameBoard.column(gameBoard.getCurrentShipLocation() );
 
             for (Monster monster : LargeMonster.getMonsters())
             {
@@ -586,7 +588,7 @@ public class TombstoneCity {
 
             }
         }
-        LOGGER.info("-- moveLargeMonsters end --");
+        GameLogging.debug("-- moveLargeMonsters end --");
     }
 
     /**
@@ -597,12 +599,12 @@ public class TombstoneCity {
      */
     boolean tryMove ( Monster monster, int newmonloc)
     {
-        LOGGER.info("tryMove("+monster.toString()+", "+newmonloc+")");
+        GameLogging.debug("tryMove("+monster.toString()+", "+newmonloc+")");
         boolean moveFound = false ;
         Characters c = gameBoard.getCharacter(newmonloc);
         if (c == Characters.Blank)
         {
-            LOGGER.info("move "+monster.toString()+" to "+newmonloc);
+            GameLogging.debug("move "+monster.toString()+" to "+newmonloc);
             monblk(monster, newmonloc) ;
             monster.setCurLocation(newmonloc);
             moveFound =  true  ;
@@ -640,7 +642,7 @@ public class TombstoneCity {
     {
         LOGGER.info("captureShip("+monster.toString()+", "+newmonloc+")");
         boolean captured = false ;
-        if (!isShipInSafeArea())
+        if (!gameBoard.isShipInSafeArea())
         {
             monblk(monster, newmonloc) ;
             monster.setCurLocation(newmonloc);
@@ -773,7 +775,7 @@ public class TombstoneCity {
             --Score10 ;
         }
         gameBoard.displayScore(Score) ;
-        gameBoard.putBlank(m_nShiploc) ;
+        gameBoard.putBlank(gameBoard.getCurrentShipLocation()) ;
         ++Schooners ;
         capture() ;
     }
@@ -814,7 +816,7 @@ public class TombstoneCity {
         class BulletAnimator extends AnimationTimer{
 
             long lastTime =0L ;
-            int newloc = m_nShiploc ;
+            int newloc = gameBoard.getCurrentShipLocation() ;
             Characters bullet ;
             final static long WaitInterval = 1000L*1000L*10L;
 
@@ -839,12 +841,12 @@ public class TombstoneCity {
                 if (c == Characters.Large1 || c == Characters.Large2)
                 { /* KILLAR   */
                     killMonster(new LargeMonster(newloc)) ;
-                    stop() ;
+                    stopAnimationTimer(this) ;
                     /* Kil0 */
                 }
                 else if (c == Characters.Small1 || c == Characters.Small2) {
                     killMonster(new SmallMonster(newloc));
-                    stop() ;
+                    stopAnimationTimer(this) ;
                 }
                 else if (c ==  Characters.Blank || c == Characters.SafeAreaBlank)
                 {  /* PUTBUL    */
@@ -852,17 +854,18 @@ public class TombstoneCity {
                 } else
                 {
                     LOGGER.info("stopping bullet animator");
-                    stop() ;
+                    stopAnimationTimer(this);
                 }
                 lastTime = currentNanoTime ;
 
             }
         }
 
-        new BulletAnimator(bullet, bulletmoveicr).start() ;
+        startAnimationTimer(new BulletAnimator(bullet, bulletmoveicr)) ;
 
         LOGGER.info("-- fire() end --");
     }
+
 
 
     void killMonster( Monster monster)
@@ -881,7 +884,7 @@ public class TombstoneCity {
         }
         gameBoard.displayScore(Score) ;
         GameLogging.debug("creating Animation timer");
-        new AnimationTimer(){
+        startAnimationTimer(new AnimationTimer(){
 
             long last = 0 ;
 
@@ -901,26 +904,29 @@ public class TombstoneCity {
                     {
                         checkForAdjacentGraves(monster.getCurLocation()) ;
                     }
-                    stop();
+                    /* ---------------------------------------------------------------- */
+                    /*     See  if ship is inside safe area  and surrounded    */
+                    /* ---------------------------------------------------------------- */
+
+                    if (gameBoard.isShipInSafeArea() && gameBoard.isSafeAreaSurrounded())
+                    {
+                        if (Schooners == 0) {
+                            gameEnd();
+                        }
+                        gameBoard.putBlank(gameBoard.getCurrentShipLocation()) ;   /* blank out ship character */
+                        --Schooners;
+                        gameBoard.displaySchooners(Schooners) ;
+                        arbshp() ;
+                    }
+
+                    stopAnimationTimer(this);
+
                 }
             }
-        }.start() ;
+        });
 
 
         GameLogging.debug("after starting animation timer");
-        /* ---------------------------------------------------------------- */
-        /*     See  if ship is inside safe area  and surrounded    */
-        /* ---------------------------------------------------------------- */
-
-        if (isShipInSafeArea() && gameBoard.isSafeAreaSurrounded())
-        {
-            if (Schooners == 0)
-                gameEnd() ;
-            gameBoard.putBlank(m_nShiploc) ;   /* blank out ship character */
-            --Schooners;
-            gameBoard.displaySchooners(Schooners) ;
-            arbshp() ;
-        }
         GameLogging.getLogger().exiting(this.getClass().getName(), "killMonster");
     }
 
@@ -933,23 +939,9 @@ public class TombstoneCity {
         GameLogging.debug("checkForAdjacentGraves "+grave);
         List<Integer> adjacentGraves = new ArrayList<>();
         adjacentGraves.add(grave);
-        checkForAdjacentGraves(adjacentGraves, grave, true );
-    }
-
-    void checkForAdjacentGraves(List<Integer> adjacentGraves, int grave, boolean retry)
-    {
-        for (int i=0; i<8; i++)
-        {
-            int nextLocation = gameBoard.neighbor(i)+grave;
-            if (gameBoard.getCharacter(nextLocation) == Characters.Grave)
-            {
-                if (!adjacentGraves.contains(nextLocation)) {
-                    adjacentGraves.add(nextLocation);
-                }
-                if (adjacentGraves.size() == 3)
-                    break ;
-            }
-        }
+        checkForAdjacentGraves(adjacentGraves, grave);
+        if (adjacentGraves.size() == 2 )
+            checkForAdjacentGraves(adjacentGraves, adjacentGraves.get(1));
 
         if (adjacentGraves.size()  == 3)
         {
@@ -980,11 +972,20 @@ public class TombstoneCity {
                 virtualTI.getVideo().locateSprite(0,(GameBoard.MAXROW+1)*8, 0) ;     /* turn off sprite      */
             }
         }
-        else if (retry && adjacentGraves.size() == 2)
-        {
-            checkForAdjacentGraves( adjacentGraves, adjacentGraves.get(1), false) ;
-        }
 
+    }
+
+    void checkForAdjacentGraves(List<Integer> adjacentGraves, int grave) {
+        for (int i = 0; i < 8; i++) {
+            int nextLocation = gameBoard.neighbor(i) + grave;
+            if (gameBoard.getCharacter(nextLocation) == Characters.Grave) {
+                if (!adjacentGraves.contains(nextLocation)) {
+                    adjacentGraves.add(nextLocation);
+                }
+                if (adjacentGraves.size() == 3)
+                    break;
+            }
+        }
     }
 
     void bigsnd()
@@ -1032,31 +1033,27 @@ public class TombstoneCity {
             }
             else
             {
-                m_nShiploc = GameBoard.INITSHIPLOC;
-                gameBoard.writeChar(m_nShiploc, Ship) ;
-                GameLogging.debug("ship captured and returned to "+m_nShiploc);
+                gameBoard.setCurrentShipLocation(GameBoard.INITSHIPLOC);
+                gameBoard.writeChar(gameBoard.getCurrentShipLocation(), Ship) ;
+                GameLogging.debug("ship captured and returned to "+gameBoard.getCurrentShipLocation());
             }
         }
     }
 
 
-    boolean isShipInSafeArea(){
-        return gameBoard.isInSafeArea(m_nShiploc);
-    }
 
     /**
      * put ship in 1st available location outside of the safe area
      */
     void arbshp()
     {
-        LOGGER.info("arbshp()");
-        int     screen_loc ;
+        GameLogging.debug("arbshp()");
+        int     screen_loc = GameBoard.INITSHIPLOC;
         boolean     found = false;
 
         while (!found)
         {
             screen_loc = gameBoard.getRandom(GameBoard.PLAYAREABG, GameBoard.PLAYAREAEND);
-            m_nShiploc = screen_loc ;
 
             for (int i=0; i<8; i++)
             {
@@ -1067,8 +1064,9 @@ public class TombstoneCity {
                 }
             }
         }
-        LOGGER.info("arbshp to "+m_nShiploc);
-        gameBoard.writeChar(m_nShiploc, Ship) ;
+        gameBoard.moveShip( screen_loc, Ship );
+        GameLogging.debug("arbshp to "+gameBoard.getCurrentShipLocation());
+
     }
 
 

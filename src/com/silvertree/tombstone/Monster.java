@@ -57,16 +57,24 @@ public abstract class Monster {
      *         false monster not found in table
      */
     public  boolean removeFromMontab(){
-        Iterator<Monster>  iter = getMontab().iterator();
-        while(iter.hasNext()){
-            Monster monster = iter.next();
-            if (monster.getCurLocation() == getCurLocation()){
-                iter.remove();
-                return true ;
-            }
+//        Iterator<Monster>  iter = getMontab().iterator();
+//        while(iter.hasNext()){
+//            Monster monster = iter.next();
+//            if (monster.getCurLocation() == getCurLocation()){
+//                iter.remove();
+//                return true ;
+//            }
+//        }
+        if (!getMontab().remove(this)) {
+            GameLogging.error("removeFromMontab: did not find Monster " + this.toString() + " in Montab");
+            return false;
         }
-        GameLogging.error( "removeFromMontab: did not find Monster "+this.toString()+" in Montab");
-        return false ;
+        return true ;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        return ((Monster)obj).getCurLocation() == this.getCurLocation();
     }
 
     @Override

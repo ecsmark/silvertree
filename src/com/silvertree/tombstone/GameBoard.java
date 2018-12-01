@@ -269,13 +269,31 @@ public class GameBoard {
         }
         //   put ship to screen in safe area
 
-        currentShipLocation = INITSHIPLOC ;
+        setCurrentShipLocation(INITSHIPLOC) ;
         writeChar(currentShipLocation,  Ship) ;
 
 
     }
 
+    public boolean isShipInSafeArea(){
+        return isInSafeArea(getCurrentShipLocation());
+    }
 
+    public int getCurrentShipLocation() {
+        return currentShipLocation;
+    }
+
+    public void setCurrentShipLocation(int currentShipLocation) {
+        this.currentShipLocation = currentShipLocation;
+    }
+
+    public void moveShip(int newLocation, Characters shipCharacter){
+        putBlank(getCurrentShipLocation());
+
+//        writeChar(getCurrentShipLocation(), Characters.Blank);
+        setCurrentShipLocation(newLocation);
+        writeChar(getCurrentShipLocation(), shipCharacter);
+    }
     /**
      * display the score at the specified area on the gameboard
      * @param score
@@ -531,6 +549,6 @@ public class GameBoard {
      * @return
      */
     public int getRandom(int min, int max){
-        return random.nextInt(max-min) + max ;
+        return random.nextInt(max-min) + min;
     }
 }
